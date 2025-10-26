@@ -102,7 +102,7 @@
                 </div>
             </div>
 
-            <!-- Submit Buttons -->
+            <!-- Submit & Clear Buttons -->
             <div class="flex gap-4 mt-6">
                 <button type="button" onclick="window.salesForm.saveDraft()" class="btn-secondary flex-1">
                     Save as Draft
@@ -110,6 +110,7 @@
                 <button type="submit" class="btn-primary flex-1">
                     Submit Report
                 </button>
+                <!-- Clear Form button removed -->
             </div>
 
         </form>
@@ -179,18 +180,25 @@
 </div>
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/sales-form.css') }}?v={{ time() }}">
+@vite('resources/css/sales-form.css')
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/sales-form.js') }}?v={{ time() }}"></script>
 <script>
-    // Initialize routes for the JavaScript
-    window.salesForm.setRoutes({
+    // Preload routes before the module script runs (avoids race with Vite type="module")
+    window.__salesFormRoutes = {
         store: '{{ route("sales.store") }}',
         productSearch: '{{ route("sales.products.search") }}',
-        quickCreate: '{{ route("sales.products.quick-create") }}'
+        quickCreate: '{{ route("sales.products.quick-create") }}',
+        getDraft: '{{ route("sales.drafts.get") }}'
+    };
+    // Optional: cleanup after module initializes
+    window.addEventListener('DOMContentLoaded', function(){
+        setTimeout(() => { try { delete window.__salesFormRoutes; } catch (e) {} }, 0);
     });
-</script>
+    </script>
+<script>
+  sessionStorage.removeItem('sales_form_autosave');
+</script>@vite('resources/js/sales-form.js')
 @endpush
 @endsection

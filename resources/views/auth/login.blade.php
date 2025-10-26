@@ -108,6 +108,9 @@
                 Back to homepage
             </a>
         </div>
+            <script>
+              sessionStorage.removeItem('sales_form_autosave');
+            </script>
     </div>
 
 </body>

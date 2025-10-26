@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailySalesReport;
+use App\Models\SalesReportDraft;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,21 +22,39 @@ class DailySalesController extends Controller
     // Store the daily sales report
     public function store(Request $request)
     {
-        $request->validate([
-            'sale_date' => 'required|date|unique:daily_sales_reports,sale_date',
-            'items' => 'required|array|min:1',
-            'items.*.product_name' => 'required|string',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
-        ]);
+    $isDraft = $request->boolean('save_as_draft');
+
+        // Validation: relax rules for drafts
+        $rules = [
+            'sale_date' => ($isDraft
+                ? 'required|date'
+                : 'required|date|unique:daily_sales_reports,sale_date'),
+            'items' => $isDraft ? 'nullable|array' : 'required|array|min:1',
+            'items.*.product_name' => $isDraft ? 'nullable|string' : 'required|string',
+            'items.*.quantity' => $isDraft ? 'nullable|integer|min:1' : 'required|integer|min:1',
+            'items.*.unit_price' => $isDraft ? 'nullable|numeric|min:0' : 'required|numeric|min:0',
+        ];
+
+        $messages = [
+            'items.*.product_name.required' => 'Please enter a product name for each sales item.',
+            'items.*.quantity.required' => 'Please enter a quantity for each sales item.',
+            'items.*.unit_price.required' => 'Please enter a unit price for each sales item.',
+            'items.required' => 'Please add at least one sales item.',
+        ];
+
+    $validated = $request->validate($rules, $messages);
 
         DB::beginTransaction();
         
         try {
-            // Calculate totals
+            // Calculate totals safely
             $totalSalesValue = 0;
-            foreach ($request->items as $item) {
-                $totalSalesValue += $item['quantity'] * $item['unit_price'];
+            if ($request->filled('items')) {
+                foreach ($request->items as $item) {
+                    $qty = isset($item['quantity']) ? (int) $item['quantity'] : 0;
+                    $price = isset($item['unit_price']) ? (float) $item['unit_price'] : 0.0;
+                    $totalSalesValue += $qty * $price;
+                }
             }
 
             $totalDeductions = 0;
@@ -49,7 +68,33 @@ class DailySalesController extends Controller
 
             $cashAtHand = $totalSalesValue - $totalDeductions;
 
-            // Create daily sales report
+            // Drafts now live in a separate table
+            if ($isDraft) {
+                $formData = $request->except(['_token']);
+                $draft = SalesReportDraft::updateOrCreate(
+                    [
+                        'user_id' => Auth::id(),
+                        'sale_date' => $request->sale_date,
+                    ],
+                    [
+                        'form_data' => $formData,
+                        'total_sales_value' => $totalSalesValue,
+                        'total_deductions' => $totalDeductions,
+                        'cash_at_hand' => $cashAtHand,
+                        'notes' => $request->notes,
+                    ]
+                );
+                DB::commit();
+                return redirect()->route('sales.create')
+                    ->with('success', 'Draft saved. You can continue editing anytime.');
+            }
+
+            // On full submit, remove draft if any and create completed report
+            $existingDraft = SalesReportDraft::where('user_id', Auth::id())
+                ->whereDate('sale_date', $request->sale_date)
+                ->first();
+
+            // Create fresh completed report
             $report = DailySalesReport::create([
                 'user_id' => Auth::id(),
                 'sale_date' => $request->sale_date,
@@ -57,17 +102,25 @@ class DailySalesController extends Controller
                 'total_deductions' => $totalDeductions,
                 'cash_at_hand' => $cashAtHand,
                 'notes' => $request->notes,
+                'status' => 'completed',
             ]);
 
             // Save sales items
-            foreach ($request->items as $item) {
-                $report->items()->create([
-                    'product_id' => $item['product_id'] ?? null,
-                    'product_name' => $item['product_name'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'total_price' => $item['quantity'] * $item['unit_price'],
-                ]);
+            if ($request->filled('items')) {
+                foreach ($request->items as $item) {
+                    if (empty($item['product_name'])) {
+                        continue; // skip incomplete draft rows
+                    }
+                    $qty = isset($item['quantity']) ? (int) $item['quantity'] : 0;
+                    $price = isset($item['unit_price']) ? (float) $item['unit_price'] : 0.0;
+                    $report->items()->create([
+                        'product_id' => $item['product_id'] ?? null,
+                        'product_name' => $item['product_name'],
+                        'quantity' => $qty,
+                        'unit_price' => $price,
+                        'total_price' => $qty * $price,
+                    ]);
+                }
             }
 
             // Save deductions
@@ -80,6 +133,11 @@ class DailySalesController extends Controller
                         ]);
                     }
                 }
+            }
+
+            // If there was a draft for this date, delete it now
+            if ($existingDraft) {
+                $existingDraft->delete();
             }
 
             DB::commit();
@@ -136,6 +194,38 @@ public function searchProducts(Request $request)
     
     return response()->json($products);
 }
+
+    // Fetch a draft for a given date for the current user
+    public function getDraft(Request $request)
+    {
+        $this->authorize('viewAny', DailySalesReport::class); // or ensure auth middleware
+
+        $date = $request->query('date');
+        if (!$date) {
+            return response()->json(['success' => false, 'message' => 'date is required'], 422);
+        }
+
+        $draft = SalesReportDraft::where('user_id', Auth::id())
+            ->whereDate('sale_date', $date)
+            ->first();
+
+        if (!$draft) {
+            return response()->json(['success' => false]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'draft' => [
+                'sale_date' => $draft->sale_date->format('Y-m-d'),
+                'form_data' => $draft->form_data,
+                'totals' => [
+                    'total_sales_value' => $draft->total_sales_value,
+                    'total_deductions' => $draft->total_deductions,
+                    'cash_at_hand' => $draft->cash_at_hand,
+                ],
+            ],
+        ]);
+    }
 
 public function quickCreateProduct(Request $request)
 {

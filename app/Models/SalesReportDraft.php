@@ -4,34 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DailySalesReport extends Model
+class SalesReportDraft extends Model
 {
     protected $fillable = [
-        'user_id',           // Add this if missing
+        'user_id',
         'sale_date',
+        'form_data',
         'total_sales_value',
         'total_deductions',
         'cash_at_hand',
         'notes',
-        'status'
     ];
 
     protected $casts = [
         'sale_date' => 'date',
+        'form_data' => 'array',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function items()
-    {
-        return $this->hasMany(DailySalesItem::class);
-    }
-
-    public function deductions()
-    {
-        return $this->hasMany(Deduction::class);
     }
 }
