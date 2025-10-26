@@ -23,7 +23,11 @@
             <div data-validation-errors="{{ json_encode($errors->all()) }}" class="hidden"></div>
         @endif
 
-        <form action="{{ route('sales.store') }}" method="POST" id="salesForm">
+      <form action="{{ route('sales.store') }}" method="POST" id="salesForm"
+          data-route-store="{{ route('sales.store') }}"
+          data-route-product-search="{{ route('sales.products.search') }}"
+          data-route-quick-create="{{ route('sales.products.quick-create') }}"
+          data-route-get-draft="{{ route('sales.drafts.get') }}">
             @csrf
 
             <!-- Sale Date -->
@@ -38,7 +42,7 @@
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Sales Items *</h2>
                 
                 <div class="mb-4">
-                    <button type="button" onclick="window.salesForm.addItem()" class="btn-primary">
+                    <button type="button" id="addItemBtn" class="btn-primary">
                         + Add Item
                     </button>
                 </div>
@@ -74,7 +78,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Deductions</h2>
-                    <button type="button" onclick="window.salesForm.addDeduction()"
+                    <button type="button" id="addDeductionBtn"
                         class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
                         + Add Deduction
                     </button>
@@ -104,7 +108,7 @@
 
             <!-- Submit & Clear Buttons -->
             <div class="flex gap-4 mt-6">
-                <button type="button" onclick="window.salesForm.saveDraft()" class="btn-secondary flex-1">
+                <button type="button" id="saveDraftBtn" class="btn-secondary flex-1">
                     Save as Draft
                 </button>
                 <button type="submit" class="btn-primary flex-1">
@@ -119,12 +123,12 @@
 </div>
 
 <!-- Quick Create Product Modal -->
-<div id="createProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) window.salesForm.closeModal()">
+<div id="createProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
             <div class="flex items-center justify-between">
                 <h3 class="text-xl font-bold text-gray-900">Create New Product</h3>
-                <button type="button" onclick="window.salesForm.closeModal()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" id="modalCloseBtn" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -132,7 +136,7 @@
             </div>
         </div>
         
-        <form id="quickCreateForm" onsubmit="window.salesForm.submitQuickCreate(event)" class="p-6">
+    <form id="quickCreateForm" class="p-6">
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Product Name *</label>
@@ -166,7 +170,7 @@
             </div>
 
             <div class="flex gap-3 mt-6 pt-4 border-t border-gray-200">
-                <button type="button" onclick="window.salesForm.closeModal()" 
+                <button type="button" id="modalCancelBtn" 
                     class="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
                     Cancel
                 </button>
@@ -184,21 +188,6 @@
 @endpush
 
 @push('scripts')
-<script>
-    // Preload routes before the module script runs (avoids race with Vite type="module")
-    window.__salesFormRoutes = {
-        store: '{{ route("sales.store") }}',
-        productSearch: '{{ route("sales.products.search") }}',
-        quickCreate: '{{ route("sales.products.quick-create") }}',
-        getDraft: '{{ route("sales.drafts.get") }}'
-    };
-    // Optional: cleanup after module initializes
-    window.addEventListener('DOMContentLoaded', function(){
-        setTimeout(() => { try { delete window.__salesFormRoutes; } catch (e) {} }, 0);
-    });
-    </script>
-<script>
-  sessionStorage.removeItem('sales_form_autosave');
-</script>@vite('resources/js/sales-form.js')
+@vite('resources/js/sales-form.js')
 @endpush
 @endsection

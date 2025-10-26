@@ -65,14 +65,23 @@ let suppressUnload = false;
 // CSRF Token
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
-// Routes (primed from Blade via window.__salesFormRoutes to avoid module load race)
-let routes = {
-    store: '',
-    productSearch: '',
-    quickCreate: '',
-    getDraft: '',
-    ...(typeof window !== 'undefined' && window.__salesFormRoutes ? window.__salesFormRoutes : {})
-};
+// Routes (read from form data attributes)
+let routes = { store: '', productSearch: '', quickCreate: '', getDraft: '' };
+let formMode = 'create'; // 'create' | 'edit'
+
+function readRoutesFromForm() {
+    const form = document.getElementById('salesForm');
+    if (!form) return;
+    routes = {
+        store: form.dataset.routeStore || routes.store,
+        productSearch: form.dataset.routeProductSearch || routes.productSearch,
+        quickCreate: form.dataset.routeQuickCreate || routes.quickCreate,
+        getDraft: form.dataset.routeGetDraft || routes.getDraft,
+    };
+    if (form.dataset.mode) {
+        formMode = form.dataset.mode;
+    }
+}
 
 // Track form changes
 function setupFormChangeDetection() {
@@ -405,11 +414,64 @@ function setupAutosave() {
     document.getElementById('salesForm')?.addEventListener('input', autosaveNow);
 }
 
+// Initialize indices from existing DOM (useful for edit mode)
+function initIndicesFromDOM() {
+    const itemsContainer = document.getElementById('itemsContainer');
+    const deductionsContainer = document.getElementById('deductionsContainer');
+    if (itemsContainer) {
+        itemIndex = itemsContainer.querySelectorAll('tr').length;
+    }
+    if (deductionsContainer) {
+        deductionIndex = deductionsContainer.children.length;
+    }
+}
+
+// Bind events to an existing item row
+function bindItemRowEvents(row) {
+    const searchInput = row.querySelector('.product-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() { searchProduct(this); });
+        searchInput.addEventListener('focus', function() { searchProduct(this); });
+    }
+    const quantityInput = row.querySelector('.quantity-input');
+    const priceInput = row.querySelector('.price-input');
+    if (quantityInput) quantityInput.addEventListener('input', calculateTotals);
+    if (priceInput) priceInput.addEventListener('input', calculateTotals);
+    const removeBtn = row.querySelector('.remove-item-btn');
+    if (removeBtn) removeBtn.addEventListener('click', function() { removeItem(this); });
+}
+
+// Bind events to existing rows (edit mode)
+function bindExistingRows() {
+    document.querySelectorAll('#itemsContainer tr').forEach(bindItemRowEvents);
+    document.querySelectorAll('#deductionsContainer > div').forEach(row => {
+        const amt = row.querySelector('input[name*="[amount]"]');
+        if (amt) amt.addEventListener('input', calculateTotals);
+        const btn = row.querySelector('.remove-deduction-btn');
+        if (btn) btn.addEventListener('click', function() { removeDeduction(this); });
+    });
+}
+
 // Initialize when DOM is ready
 window.addEventListener('DOMContentLoaded', function() {
+    // Read routes from form data attributes and bind UI events
+    readRoutesFromForm();
+    document.getElementById('addItemBtn')?.addEventListener('click', addItem);
+    document.getElementById('addDeductionBtn')?.addEventListener('click', addDeduction);
+    document.getElementById('saveDraftBtn')?.addEventListener('click', saveDraft);
+    document.getElementById('modalCloseBtn')?.addEventListener('click', closeModal);
+    document.getElementById('modalCancelBtn')?.addEventListener('click', closeModal);
+    const modal = document.getElementById('createProductModal');
+    if (modal) { modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); }); }
+    document.getElementById('quickCreateForm')?.addEventListener('submit', submitQuickCreate);
     // Only clear form fields if no autosave/draft is present
     const restored = restoreFromAutosave();
-    if (!restored) {
+    if (formMode === 'edit') {
+        // Do not reset or auto-add in edit mode; just align indices and totals
+        initIndicesFromDOM();
+        bindExistingRows();
+        calculateTotals();
+    } else if (!restored) {
         const form = document.getElementById('salesForm');
         if (form) {
             form.reset();
