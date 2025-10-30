@@ -16,7 +16,12 @@ class DailySalesController extends Controller
     public function create()
     {
         $products = Product::where('is_active', true)->get();
-        return view('sales.create', compact('products'));
+        
+        // Get monthly totals for current month up to today
+        $today = date('Y-m-d');
+        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($today, Auth::id());
+        
+        return view('sales.create', compact('products', 'monthlyTotals'));
     }
 
     // Store the daily sales report
@@ -164,7 +169,11 @@ class DailySalesController extends Controller
     public function show($id)
     {
         $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
-        return view('sales.show', compact('report'));
+        
+        // Get monthly totals up to this report's date
+        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, $report->user_id);
+        
+        return view('sales.show', compact('report', 'monthlyTotals'));
     }
 
     // Export sales report to PDF
@@ -172,7 +181,10 @@ class DailySalesController extends Controller
     {
         $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
         
-        $pdf = Pdf::loadView('sales.pdf', compact('report'));
+        // Get monthly totals up to this report's date for PDF
+        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, $report->user_id);
+        
+        $pdf = Pdf::loadView('sales.pdf', compact('report', 'monthlyTotals'));
         
         $filename = 'sales-report-' . $report->sale_date->format('Y-m-d') . '.pdf';
         

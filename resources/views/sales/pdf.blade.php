@@ -212,6 +212,19 @@
         </table>
     </div>
 
+    <!-- Monthly Cumulative Sales -->
+    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #fef3c7 50%, #fee2e2 100%); border: 3px solid #f97316; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <h2 style="margin: 0 0 10px 0; color: #c2410c; font-size: 14px; font-weight: bold;">
+            📊 Total Monthly Sales ({{ $monthlyTotals['month_name'] }})
+        </h2>
+        <p style="margin: 10px 0; font-size: 32px; font-weight: bold; color: #ea580c;">
+            ZMW {{ number_format($monthlyTotals['total_sales'], 2) }}
+        </p>
+        <p style="margin: 5px 0 0 0; font-size: 10px; color: #9a3412; font-weight: 600;">
+            Cumulative from {{ \Carbon\Carbon::parse($monthlyTotals['start_date'])->format('M d') }} to {{ \Carbon\Carbon::parse($monthlyTotals['end_date'])->format('M d, Y') }} ({{ $monthlyTotals['report_count'] }} report(s))
+        </p>
+    </div>
+
     <!-- Notes -->
     @if($report->notes)
         <h2>Notes</h2>

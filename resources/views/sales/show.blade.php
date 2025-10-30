@@ -45,7 +45,25 @@
             </div>
         </div>
 
-        <!-- Sales Items -->
+        <!-- Monthly Cumulative Sales -->
+        <div class="bg-gradient-to-br from-green-50 via-yellow-50 to-red-50 rounded-2xl border-2 border-orange-300 p-6 mb-8 shadow-lg">
+            <div class="text-center">
+                <div class="flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6 mr-2 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold bg-gradient-to-r from-green-700 via-orange-600 to-red-700 bg-clip-text text-transparent">
+                        Total Monthly Sales ({{ $monthlyTotals['month_name'] }})
+                    </h3>
+                </div>
+                <p class="text-5xl font-bold bg-gradient-to-r from-green-600 via-orange-500 to-red-600 bg-clip-text text-transparent mb-2">
+                    ZMW {{ number_format($monthlyTotals['total_sales'], 2) }}
+                </p>
+                <p class="text-sm text-orange-700 font-medium">
+                    Cumulative from {{ \Carbon\Carbon::parse($monthlyTotals['start_date'])->format('M d') }} to {{ \Carbon\Carbon::parse($monthlyTotals['end_date'])->format('M d, Y') }} ({{ $monthlyTotals['report_count'] }} report(s))
+                </p>
+            </div>
+        </div>        <!-- Sales Items -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">Sales Items</h2>
             
