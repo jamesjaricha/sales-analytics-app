@@ -6,6 +6,7 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DailySalesController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\MonthlyReportController;
 
 Route::middleware(['auth', RoleMiddleware::class.':admin,sales_rep'])->group(function () {
     // Sales
@@ -26,6 +27,10 @@ Route::middleware(['auth', RoleMiddleware::class.':admin,sales_rep'])->group(fun
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+    // Monthly Analytics Report
+    Route::get('/reports/monthly', [MonthlyReportController::class, 'index'])->name('reports.monthly');
+    Route::get('/reports/monthly/pdf', [MonthlyReportController::class, 'exportPDF'])->name('reports.monthly.pdf');
 });
 
 

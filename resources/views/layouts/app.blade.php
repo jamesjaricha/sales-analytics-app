@@ -25,10 +25,9 @@
                 <div class="hidden md:flex space-x-8">
                     <a href="/dashboard" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Dashboard</a>
                     <a href="{{ route('sales.create') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Record Sales</a>
-<a href="{{ route('sales.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">View Sales</a>
-                   <a href="{{ route('products.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Products</a>
-
-            
+                    <a href="{{ route('sales.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">View Sales</a>
+                    <a href="{{ route('reports.monthly') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Monthly Report</a>
+                    <a href="{{ route('products.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Products</a>
                 </div>
                 
                 <!-- User Menu -->
