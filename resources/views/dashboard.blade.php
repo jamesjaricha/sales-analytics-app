@@ -13,7 +13,7 @@
         <!-- KPI Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             
-            <!-- Total Revenue Card -->
+            <!-- Total Sales Card (matches reports) -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <div class="flex items-center justify-between mb-6">
                     <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
@@ -22,37 +22,37 @@
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Total Revenue</h3>
-                <p class="text-4xl font-bold text-gray-900 mb-1">ZMW {{ number_format($totalRevenue, 0) }}</p>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Total Sales</h3>
+                <p class="text-4xl font-bold text-gray-900 mb-1">ZMW {{ number_format($totalSales, 0) }}</p>
                 <p class="text-xs text-gray-400">This month</p>
             </div>
 
-            <!-- Total Sales Card -->
+            <!-- Total Reports Card -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <div class="flex items-center justify-between mb-6">
                     <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Sales Reports</h3>
+                <p class="text-4xl font-bold text-gray-900 mb-1">{{ $totalReports }}</p>
+                <p class="text-xs text-gray-400">This month</p>
+            </div>
+
+            <!-- Avg Daily Sales Card -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                         <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Sales Reports</h3>
-                <p class="text-4xl font-bold text-gray-900 mb-1">{{ $totalSales }}</p>
-                <p class="text-xs text-gray-400">This month</p>
-            </div>
-
-            <!-- Total Items Card -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                        </svg>
-                    </div>
-                </div>
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Items Sold</h3>
-                <p class="text-4xl font-bold text-gray-900 mb-1">{{ number_format($totalOrders) }}</p>
-                <p class="text-xs text-gray-400">This month</p>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Avg. Daily Sales</h3>
+                <p class="text-4xl font-bold text-gray-900 mb-1">ZMW {{ number_format($averageDailySales, 2) }}</p>
+                <p class="text-xs text-gray-400">Per report</p>
             </div>
         </div>
 

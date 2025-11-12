@@ -12,25 +12,30 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Get current month's data
-        $currentMonth = Carbon::now()->month;
-        $currentYear = Carbon::now()->year;
+        // Get current month's data (using exact same approach as monthly report)
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
 
-        // Total revenue this month (cash at hand)
-        $totalRevenue = DailySalesReport::whereMonth('sale_date', $currentMonth)
-            ->whereYear('sale_date', $currentYear)
-            ->sum('cash_at_hand');
+        // Get completed reports for this month (exact same query as monthly report)
+        $completedReports = DailySalesReport::where('status', 'completed')
+            ->whereDate('sale_date', '>=', $startOfMonth)
+            ->whereDate('sale_date', '<=', $endOfMonth)
+            ->get();
+
+        // Total sales this month (gross sales - same as reports)
+        $totalSales = $completedReports->sum('total_sales_value');
+
+        // Total revenue this month (net after deductions)
+        $totalRevenue = $completedReports->sum('cash_at_hand');
 
         // Total sales reports this month
-        $totalSales = DailySalesReport::whereMonth('sale_date', $currentMonth)
-            ->whereYear('sale_date', $currentYear)
-            ->count();
+        $totalReports = $completedReports->count();
 
-        // Total items sold this month
-        $totalOrders = DailySalesItem::whereHas('dailySalesReport', function($query) use ($currentMonth, $currentYear) {
-                $query->whereMonth('sale_date', $currentMonth)
-                      ->whereYear('sale_date', $currentYear);
-            })
+        // Average daily sales (same calculation as monthly report)
+        $averageDailySales = $totalReports > 0 ? $totalSales / $totalReports : 0;
+
+        // Total items sold this month (from completed reports only)
+        $totalOrders = DailySalesItem::whereIn('daily_sales_report_id', $completedReports->pluck('id'))
             ->sum('quantity');
 
         // Last 7 Days Comparison
@@ -85,11 +90,8 @@ class DashboardController extends Controller
         $previous7DaysTotal = array_sum($previous7DaysValues);
         $changePercent = $previous7DaysTotal > 0 ? (($last7DaysTotal - $previous7DaysTotal) / $previous7DaysTotal) * 100 : 0;
 
-        // Top 5 products this month
-        $topProducts = DailySalesItem::whereHas('dailySalesReport', function($query) use ($currentMonth, $currentYear) {
-                $query->whereMonth('sale_date', $currentMonth)
-                      ->whereYear('sale_date', $currentYear);
-            })
+        // Top 5 products this month (from completed reports only - same as monthly report)
+        $topProducts = DailySalesItem::whereIn('daily_sales_report_id', $completedReports->pluck('id'))
             ->select('product_name', DB::raw('SUM(quantity) as total_quantity'), DB::raw('SUM(total_price) as total_revenue'))
             ->groupBy('product_name')
             ->orderBy('total_quantity', 'desc')
@@ -100,8 +102,10 @@ class DashboardController extends Controller
 
 
         return view('dashboard', [
-            'totalRevenue' => $totalRevenue,
             'totalSales' => $totalSales,
+            'totalRevenue' => $totalRevenue,
+            'totalReports' => $totalReports,
+            'averageDailySales' => $averageDailySales,
             'totalOrders' => $totalOrders,
             'chartLabels' => json_encode($chartLabels),
             'last7DaysValues' => json_encode($last7DaysValues),
