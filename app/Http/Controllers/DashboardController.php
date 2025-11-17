@@ -25,8 +25,7 @@ class DashboardController extends Controller
         // Total sales this month (gross sales - same as reports)
         $totalSales = $completedReports->sum('total_sales_value');
 
-        // Total revenue this month (net after deductions)
-        $totalRevenue = $completedReports->sum('cash_at_hand');
+        // Remove unused totalRevenue variable
 
         // Total sales reports this month
         $totalReports = $completedReports->count();
@@ -91,19 +90,24 @@ class DashboardController extends Controller
         $changePercent = $previous7DaysTotal > 0 ? (($last7DaysTotal - $previous7DaysTotal) / $previous7DaysTotal) * 100 : 0;
 
         // Top 5 products this month (from completed reports only - same as monthly report)
-        $topProducts = DailySalesItem::whereIn('daily_sales_report_id', $completedReports->pluck('id'))
-            ->select('product_name', DB::raw('SUM(quantity) as total_quantity'), DB::raw('SUM(total_price) as total_revenue'))
-            ->groupBy('product_name')
-            ->orderBy('total_quantity', 'desc')
-            ->limit(5)
-            ->get();
+        $reportIds = $completedReports->pluck('id');
+        
+        if ($reportIds->isNotEmpty()) {
+            $topProducts = DailySalesItem::whereIn('daily_sales_report_id', $reportIds)
+                ->select('product_name', DB::raw('SUM(quantity) as total_quantity'), DB::raw('SUM(total_price) as total_revenue'))
+                ->groupBy('product_name')
+                ->orderByDesc('total_quantity')
+                ->limit(5)
+                ->get();
+        } else {
+            $topProducts = collect();
+        }
 
 
 
 
         return view('dashboard', [
             'totalSales' => $totalSales,
-            'totalRevenue' => $totalRevenue,
             'totalReports' => $totalReports,
             'averageDailySales' => $averageDailySales,
             'totalOrders' => $totalOrders,

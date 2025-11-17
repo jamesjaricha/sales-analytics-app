@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class DailySalesController extends Controller
@@ -16,18 +17,18 @@ class DailySalesController extends Controller
     public function create()
     {
         $products = Product::where('is_active', true)->get();
-        
+
         // Get monthly totals for current month up to today
         $today = date('Y-m-d');
         $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($today, Auth::id());
-        
+
         return view('sales.create', compact('products', 'monthlyTotals'));
     }
 
     // Store the daily sales report
     public function store(Request $request)
     {
-    $isDraft = $request->boolean('save_as_draft');
+        $isDraft = $request->boolean('save_as_draft');
 
         // Validation: relax rules for drafts
         $rules = [
@@ -47,10 +48,10 @@ class DailySalesController extends Controller
             'items.required' => 'Please add at least one sales item.',
         ];
 
-    $validated = $request->validate($rules, $messages);
+        $validated = $request->validate($rules, $messages);
 
         DB::beginTransaction();
-        
+
         try {
             // Calculate totals safely
             $totalSalesValue = 0;
@@ -148,7 +149,6 @@ class DailySalesController extends Controller
             DB::commit();
 
             return redirect()->route('sales.index')->with('success', 'Daily sales report saved successfully!');
-
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Error saving report: ' . $e->getMessage())->withInput();
@@ -161,7 +161,7 @@ class DailySalesController extends Controller
         $reports = DailySalesReport::with('user')
             ->orderBy('sale_date', 'desc')
             ->paginate(15);
-        
+
         return view('sales.index', compact('reports'));
     }
 
@@ -169,10 +169,10 @@ class DailySalesController extends Controller
     public function show($id)
     {
         $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
-        
+
         // Get monthly totals up to this report's date
         $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, $report->user_id);
-        
+
         return view('sales.show', compact('report', 'monthlyTotals'));
     }
 
@@ -180,37 +180,37 @@ class DailySalesController extends Controller
     public function exportPDF($id)
     {
         $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
-        
+
         // Get monthly totals up to this report's date for PDF
         $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, $report->user_id);
-        
+
         $pdf = Pdf::loadView('sales.pdf', compact('report', 'monthlyTotals'));
-        
+
         $filename = 'sales-report-' . $report->sale_date->format('Y-m-d') . '.pdf';
-        
+
         return $pdf->download($filename);
     }
 
     // Search products for autocomplete
-public function searchProducts(Request $request)
-{
-    $query = $request->get('q', '');
-    
-    $products = Product::where('is_active', true)
-        ->where(function($q) use ($query) {
-            $q->where('name', 'LIKE', "%{$query}%")
-              ->orWhere('sku', 'LIKE', "%{$query}%");
-        })
-        ->limit(10)
-        ->get(['id', 'name', 'sku', 'price']);
-    
-    return response()->json($products);
-}
+    public function searchProducts(Request $request)
+    {
+        $query = $request->get('q', '');
+
+        $products = Product::where('is_active', true)
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'LIKE', "%{$query}%")
+                    ->orWhere('sku', 'LIKE', "%{$query}%");
+            })
+            ->limit(10)
+            ->get(['id', 'name', 'sku', 'price']);
+
+        return response()->json($products);
+    }
 
     // Fetch a draft for a given date for the current user
     public function getDraft(Request $request)
     {
-        $this->authorize('viewAny', DailySalesReport::class); // or ensure auth middleware
+        // Authorization handled by middleware
 
         $date = $request->query('date');
         if (!$date) {
@@ -239,28 +239,25 @@ public function searchProducts(Request $request)
         ]);
     }
 
-public function quickCreateProduct(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string|max:255|unique:products,name',
-        'price' => 'required|numeric|min:0',
-        'sku' => 'nullable|string|max:100|unique:products,sku',
-    ]);
+    public function quickCreateProduct(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:products,name',
+            'price' => 'required|numeric|min:0',
+            'sku' => 'nullable|string|max:100|unique:products,sku',
+        ]);
 
-    $product = Product::create([
-        'name' => $request->name,
-        'price' => $request->price,
-        'sku' => $request->sku,
-        'description' => $request->description,
-        'is_active' => true,
-    ]);
+        $product = Product::create([
+            'name' => $request->name,
+            'price' => $request->price,
+            'sku' => $request->sku,
+            'description' => $request->description,
+            'is_active' => true,
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'product' => $product
-    ]);
+        return response()->json([
+            'success' => true,
+            'product' => $product
+        ]);
+    }
 }
-
-
-}
-

@@ -28,6 +28,9 @@
                     <a href="{{ route('sales.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">View Sales</a>
                     <a href="{{ route('reports.monthly') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Monthly Report</a>
                     <a href="{{ route('products.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Products</a>
+                    @if(auth()->user()->role === 'admin')
+                        <a href="{{ route('users.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Users</a>
+                    @endif
                 </div>
                 
                 <!-- User Menu -->

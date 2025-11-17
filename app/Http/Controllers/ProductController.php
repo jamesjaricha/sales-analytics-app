@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -10,7 +12,10 @@ class ProductController extends Controller
     // List all products
     public function index()
     {
-        $products = Product::orderBy('name')->paginate(20);
+        $products = Product::select(['id', 'name', 'sku', 'price', 'stock_quantity', 'category', 'is_active', 'created_at'])
+            ->orderBy('name')
+            ->paginate(20);
+        
         return view('products.index', compact('products'));
     }
 
@@ -21,52 +26,38 @@ class ProductController extends Controller
     }
 
     // Store new product
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:products,sku',
-            'price' => 'required|numeric|min:0',
-            'cost' => 'nullable|numeric|min:0',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'category' => 'nullable|string|max:255',
-        ]);
-
-        Product::create($request->all());
+        // Validation is handled by StoreProductRequest
+        Product::create($request->validated());
 
         return redirect()->route('products.index')->with('success', 'Product created successfully!');
     }
 
     // Show edit form
-    public function edit($id)
+    public function edit(Product $product)
     {
-        $product = Product::findOrFail($id);
         return view('products.edit', compact('product'));
     }
 
     // Update product
-    public function update(Request $request, $id)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $product = Product::findOrFail($id);
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'sku' => 'required|string|unique:products,sku,' . $id,
-            'price' => 'required|numeric|min:0',
-            'cost' => 'nullable|numeric|min:0',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'category' => 'nullable|string|max:255',
-        ]);
-
-        $product->update($request->all());
+        // Validation is handled by UpdateProductRequest
+        $product->update($request->validated());
 
         return redirect()->route('products.index')->with('success', 'Product updated successfully!');
     }
 
-    // Delete product
-    public function destroy($id)
+    // Delete product (soft delete would be better for business data)
+    public function destroy(Product $product)
     {
-        $product = Product::findOrFail($id);
+        // Check if product is used in any sales reports before deletion
+        if ($product->dailySalesItems()->exists()) {
+            return redirect()->route('products.index')
+                ->with('error', 'Cannot delete product that has been used in sales reports. Consider deactivating it instead.');
+        }
+
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully!');

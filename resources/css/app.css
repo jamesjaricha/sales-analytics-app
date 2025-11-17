@@ -1,3 +1,134 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 
+ * Custom Component Classes for Sales Analytics App
+ * Following Laravel/Tailwind best practices - no inline styles
+ * 
+ * Usage:
+ * - Use .btn classes for all buttons
+ * - Use .alert classes for notifications
+ * - Use .form-* classes for form elements
+ * - Use .card classes for containers
+ * - Use .badge classes for status indicators
+ */
+@layer components {
+    /* Button Components */
+    .btn {
+        @apply inline-flex items-center px-4 py-2 border font-medium rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+    }
+    
+    .btn-primary {
+        @apply bg-blue-600 border-transparent text-white hover:bg-blue-700 focus:ring-blue-500;
+    }
+    
+    .btn-secondary {
+        @apply bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 focus:ring-gray-500;
+    }
+    
+    .btn-danger {
+        @apply bg-red-600 border-transparent text-white hover:bg-red-700 focus:ring-red-500;
+    }
+    
+    .btn-sm {
+        @apply px-3 py-1 text-xs;
+    }
+    
+    .btn-lg {
+        @apply px-6 py-3 text-base;
+    }
+
+    /* Alert Components */
+    .alert {
+        @apply px-4 py-3 rounded-lg border;
+    }
+    
+    .alert-success {
+        @apply bg-green-50 border-green-200 text-green-700;
+    }
+    
+    .alert-error {
+        @apply bg-red-50 border-red-200 text-red-700;
+    }
+    
+    .alert-warning {
+        @apply bg-yellow-50 border-yellow-200 text-yellow-700;
+    }
+    
+    .alert-info {
+        @apply bg-blue-50 border-blue-200 text-blue-700;
+    }
+
+    /* Card Components */
+    .card {
+        @apply bg-white rounded-lg shadow-sm border border-gray-200;
+    }
+    
+    .card-header {
+        @apply px-6 py-4 border-b border-gray-200;
+    }
+    
+    .card-body {
+        @apply px-6 py-4;
+    }
+    
+    .card-footer {
+        @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+    }
+
+    /* Form Components */
+    .form-input {
+        @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
+    }
+    
+    .form-input-error {
+        @apply border-red-500 focus:ring-red-500 focus:border-red-500;
+    }
+    
+    .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-2;
+    }
+    
+    .form-error {
+        @apply mt-1 text-sm text-red-600;
+    }
+
+    /* Status Badges */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+    
+    .badge-success {
+        @apply bg-green-100 text-green-800;
+    }
+    
+    .badge-warning {
+        @apply bg-yellow-100 text-yellow-800;
+    }
+    
+    .badge-danger {
+        @apply bg-red-100 text-red-800;
+    }
+    
+    .badge-gray {
+        @apply bg-gray-100 text-gray-800;
+    }
+
+    /* Table Components */
+    .table {
+        @apply min-w-full divide-y divide-gray-200;
+    }
+    
+    .table-header {
+        @apply bg-gray-50;
+    }
+    
+    .table-cell {
+        @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+    }
+    
+    .table-row {
+        @apply hover:bg-gray-50;
+    }
+}

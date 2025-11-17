@@ -3,15 +3,15 @@
 @section('content')
 <!-- Hidden flash message data -->
 @if(session('success'))
-    <div data-flash-success="{{ session('success') }}" class="hidden"></div>
+<div data-flash-success="{{ session('success') }}" class="hidden"></div>
 @endif
 @if(session('error'))
-    <div data-flash-error="{{ session('error') }}" class="hidden"></div>
+<div data-flash-error="{{ session('error') }}" class="hidden"></div>
 @endif
 
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-semibold text-gray-900">Record Daily Sales</h1>
@@ -20,27 +20,27 @@
 
         <!-- Hidden error data for toast notifications -->
         @if($errors->any())
-            <div data-validation-errors="{{ json_encode($errors->all()) }}" class="hidden"></div>
+        <div data-validation-errors="{{ json_encode($errors->all()) }}" class="hidden"></div>
         @endif
 
-      <form action="{{ route('sales.store') }}" method="POST" id="salesForm"
-          data-route-store="{{ route('sales.store') }}"
-          data-route-product-search="{{ route('sales.products.search') }}"
-          data-route-quick-create="{{ route('sales.products.quick-create') }}"
-          data-route-get-draft="{{ route('sales.drafts.get') }}">
+        <form action="{{ route('sales.store') }}" method="POST" id="salesForm"
+            data-route-store="{{ route('sales.store') }}"
+            data-route-product-search="{{ route('sales.products.search') }}"
+            data-route-quick-create="{{ route('sales.products.quick-create') }}"
+            data-route-get-draft="{{ route('sales.drafts.get') }}">
             @csrf
 
             <!-- Sale Date -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Sale Date *</label>
-                <input type="date" name="sale_date" value="{{ old('sale_date', date('Y-m-d')) }}" 
+                <input type="date" name="sale_date" value="{{ old('sale_date', date('Y-m-d')) }}"
                     class="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
             </div>
 
             <!-- Sales Items -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Sales Items *</h2>
-                
+
                 <div class="mb-4">
                     <button type="button" id="addItemBtn" class="btn-primary">
                         + Add Item
@@ -143,7 +143,7 @@
 </div>
 
 <!-- Quick Create Product Modal -->
-<div id="createProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="createProductModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
             <div class="flex items-center justify-between">
@@ -155,34 +155,34 @@
                 </button>
             </div>
         </div>
-        
-    <form id="quickCreateForm" class="p-6">
+
+        <form id="quickCreateForm" class="p-6">
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Product Name *</label>
-                    <input type="text" id="newProductName" 
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm" 
+                    <input type="text" id="newProductName"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                         placeholder="e.g., Luxpower 6kw Inverter" required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Price (ZMW) *</label>
-                    <input type="number" step="0.01" id="newProductPrice" 
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm" 
+                    <input type="number" step="0.01" id="newProductPrice"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                         placeholder="0.00" min="0" required>
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">SKU (Optional)</label>
-                    <input type="text" id="newProductSku" 
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm" 
+                    <input type="text" id="newProductSku"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                         placeholder="e.g., LUX-6KW-001">
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Description (Optional)</label>
                     <textarea id="newProductDescription" rows="3"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm resize-none" 
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm resize-none"
                         placeholder="Brief product description"></textarea>
                 </div>
 
@@ -190,7 +190,7 @@
             </div>
 
             <div class="flex gap-3 mt-6 pt-4 border-t border-gray-200">
-                <button type="button" id="modalCancelBtn" 
+                <button type="button" id="modalCancelBtn"
                     class="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
                     Cancel
                 </button>

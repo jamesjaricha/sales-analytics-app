@@ -177,9 +177,6 @@
     </div>
 </div>
 
-<!-- Chart.js Library -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
 // Last 7 Days Sales Chart
 const weeklyComparisonCtx = document.getElementById('weeklyComparisonChart').getContext('2d');

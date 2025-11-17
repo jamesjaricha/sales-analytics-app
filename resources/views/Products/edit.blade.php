@@ -6,100 +6,153 @@
         
         <!-- Header -->
         <div class="mb-8">
+            <div class="flex items-center space-x-4 mb-4">
+                <a href="{{ route('products.index') }}" class="btn btn-secondary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Products
+                </a>
+            </div>
             <h1 class="text-3xl font-semibold text-gray-900">Edit Product</h1>
-            <p class="text-gray-500 mt-2">Update product information</p>
+            <p class="text-gray-500 mt-2">Update {{ $product->name }}</p>
         </div>
 
-        @if($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-                <ul class="list-disc list-inside">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+        <!-- Form -->
+        <div class="card">
+            <div class="card-body">
+                <form action="{{ route('products.update', $product) }}" method="POST" class="space-y-6">
+                    @csrf
+                    @method('PUT')
+
+                    <!-- Name -->
+                    <div>
+                        <label for="name" class="form-label">
+                            Product Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="name" 
+                               id="name" 
+                               value="{{ old('name', $product->name) }}"
+                               class="form-input @error('name') form-input-error @enderror"
+                               required>
+                        @error('name')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- SKU -->
+                    <div>
+                        <label for="sku" class="form-label">
+                            SKU (Stock Keeping Unit) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="sku" 
+                               id="sku" 
+                               value="{{ old('sku', $product->sku) }}"
+                               class="form-input @error('sku') form-input-error @enderror"
+                               required>
+                        @error('sku')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label for="description" class="form-label">
+                            Description
+                        </label>
+                        <textarea name="description" 
+                                  id="description" 
+                                  rows="3"
+                                  class="form-input @error('description') form-input-error @enderror">{{ old('description', $product->description) }}</textarea>
+                        @error('description')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Price -->
+                        <div>
+                            <label for="price" class="form-label">
+                                Price (ZMW) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" 
+                                   name="price" 
+                                   id="price" 
+                                   step="0.01"
+                                   min="0"
+                                   value="{{ old('price', $product->price) }}"
+                                   class="form-input @error('price') form-input-error @enderror"
+                                   required>
+                            @error('price')
+                                <p class="form-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Cost -->
+                        <div>
+                            <label for="cost" class="form-label">
+                                Cost (ZMW)
+                            </label>
+                            <input type="number" 
+                                   name="cost" 
+                                   id="cost" 
+                                   step="0.01"
+                                   min="0"
+                                   value="{{ old('cost', $product->cost) }}"
+                                   class="form-input @error('cost') form-input-error @enderror">
+                            @error('cost')
+                                <p class="form-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Stock Quantity -->
+                        <div>
+                            <label for="stock_quantity" class="form-label">
+                                Stock Quantity
+                            </label>
+                            <input type="number" 
+                                   name="stock_quantity" 
+                                   id="stock_quantity" 
+                                   min="0"
+                                   value="{{ old('stock_quantity', $product->stock_quantity) }}"
+                                   class="form-input @error('stock_quantity') form-input-error @enderror">
+                            @error('stock_quantity')
+                                <p class="form-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label for="category" class="form-label">
+                                Category
+                            </label>
+                            <input type="text" 
+                                   name="category" 
+                                   id="category" 
+                                   value="{{ old('category', $product->category) }}"
+                                   class="form-input @error('category') form-input-error @enderror">
+                            @error('category')
+                                <p class="form-error">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-end space-x-4 pt-6">
+                        <a href="{{ route('products.index') }}" class="btn btn-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Update Product
+                        </button>
+                    </div>
+                </form>
             </div>
-        @endif
-
-        <form action="{{ route('products.update', $product->id) }}" method="POST">
-            @csrf
-            @method('PUT')
-
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-                
-                <!-- Product Name -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-                    <input type="text" name="name" value="{{ old('name', $product->name) }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-
-                <!-- SKU -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">SKU (Product Code) *</label>
-                    <input type="text" name="sku" value="{{ old('sku', $product->sku) }}" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
-
-                <!-- Price and Cost -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price (ZMW) *</label>
-                        <input type="number" step="0.01" name="price" value="{{ old('price', $product->price) }}" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Cost Price (ZMW)</label>
-                        <input type="number" step="0.01" name="cost" value="{{ old('cost', $product->cost) }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                </div>
-
-                <!-- Stock and Category -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity</label>
-                        <input type="number" name="stock_quantity" value="{{ old('stock_quantity', $product->stock_quantity) }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <input type="text" name="category" value="{{ old('category', $product->category) }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <textarea name="description" rows="3"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">{{ old('description', $product->description) }}</textarea>
-                </div>
-
-                <!-- Active Status -->
-                <div class="mb-6">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', $product->is_active) ? 'checked' : '' }}
-                            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                        <span class="ml-2 text-sm font-medium text-gray-700">Product is active</span>
-                    </label>
-                </div>
-
-            </div>
-
-            <!-- Buttons -->
-            <div class="flex justify-end gap-4">
-                <a href="{{ route('products.index') }}"
-                    style="background-color: #6b7280 !important; color: white !important; padding: 12px 24px !important; border-radius: 8px !important; font-weight: 600 !important; text-decoration: none !important; display: inline-block !important;">
-                    Cancel
-                </a>
-                <button type="submit"
-                    style="background-color: #16a34a !important; color: white !important; padding: 12px 32px !important; border-radius: 8px !important; font-weight: 600 !important; border: none !important; cursor: pointer !important;">
-                    Update Product
-                </button>
-            </div>
-
-        </form>
-
+        </div>
     </div>
 </div>
 @endsection

@@ -91,23 +91,10 @@
             </form>
         </div>
 
-        <!-- Register Link -->
-        <p class="text-center mt-6 text-gray-600">
-            Don't have an account? 
-            <a href="{{ route('register') }}" class="font-semibold text-blue-600 hover:text-blue-700">
-                Sign up for free
-            </a>
+        <!-- Security Notice -->
+        <p class="text-center mt-6 text-sm text-gray-500">
+            Access is restricted. Contact your administrator for an account.
         </p>
-
-        <!-- Back to Home -->
-        <div class="text-center mt-6">
-            <a href="/" class="text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Back to homepage
-            </a>
-        </div>
             <script>
               sessionStorage.removeItem('sales_form_autosave');
             </script>
