@@ -3,7 +3,7 @@
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <!-- Header -->
         <div class="mb-10">
             <h1 class="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
@@ -12,7 +12,7 @@
 
         <!-- KPI Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            
+
             <!-- Total Sales Card (matches reports) -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <div class="flex items-center justify-between mb-6">
@@ -58,7 +58,7 @@
 
         <!-- Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-            
+
             <!-- Last 7 Days Sales -->
             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                 <div class="flex justify-between items-start mb-8">
@@ -160,7 +160,7 @@
                 </div>
                 <p class="text-blue-100">Enter today's sales data</p>
             </a>
-            
+
             <a href="{{ route('products.index') }}" class="group bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-8 text-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1" style="text-decoration: none;">
                 <div class="flex items-center gap-4 mb-4">
                     <div class="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
@@ -177,10 +177,19 @@
     </div>
 </div>
 
-<script>
-// Last 7 Days Sales Chart
-const weeklyComparisonCtx = document.getElementById('weeklyComparisonChart').getContext('2d');
-new Chart(weeklyComparisonCtx, {
+@push('scripts')
+<script type="text/javascript">
+// Wait for Chart.js to load
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure Chart is available
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded');
+        return;
+    }
+
+    // Last 7 Days Sales Chart
+    const weeklyComparisonCtx = document.getElementById('weeklyComparisonChart').getContext('2d');
+    new Chart(weeklyComparisonCtx, {
     type: 'bar',
     data: {
         labels: {!! $chartLabels !!},
@@ -188,14 +197,18 @@ new Chart(weeklyComparisonCtx, {
             {
                 label: 'Last 7 Days',
                 data: {!! $last7DaysValues !!},
-                backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                borderColor: 'rgb(37, 99, 235)',
+                borderWidth: 0,
                 borderRadius: 8,
                 borderSkipped: false,
             },
             {
                 label: 'Previous 7 Days',
                 data: {!! $previous7DaysValues !!},
-                backgroundColor: 'rgba(209, 213, 219, 0.6)',
+                backgroundColor: 'rgba(156, 163, 175, 0.5)',
+                borderColor: 'rgb(156, 163, 175)',
+                borderWidth: 0,
                 borderRadius: 8,
                 borderSkipped: false,
             }
@@ -273,28 +286,28 @@ new Chart(cashWeeklyCtx, {
             {
                 label: 'Last 7 Days',
                 data: {!! $last7DaysCash !!},
-                borderColor: 'rgb(34, 197, 94)',
-                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                borderColor: 'rgb(22, 163, 74)',
+                backgroundColor: 'rgba(22, 163, 74, 0.15)',
                 tension: 0.4,
                 fill: true,
                 pointRadius: 6,
                 pointHoverRadius: 8,
                 borderWidth: 3,
-                pointBackgroundColor: 'rgb(34, 197, 94)',
+                pointBackgroundColor: 'rgb(22, 163, 74)',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2
             },
             {
                 label: 'Previous 7 Days',
                 data: {!! $previous7DaysCash !!},
-                borderColor: 'rgb(209, 213, 219)',
-                backgroundColor: 'rgba(209, 213, 219, 0.1)',
+                borderColor: 'rgb(156, 163, 175)',
+                backgroundColor: 'rgba(156, 163, 175, 0.08)',
                 tension: 0.4,
                 fill: true,
-                pointRadius: 6,
-                pointHoverRadius: 8,
-                borderWidth: 3,
-                pointBackgroundColor: 'rgb(209, 213, 219)',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderWidth: 2,
+                pointBackgroundColor: 'rgb(156, 163, 175)',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
                 borderDash: [5, 5]
@@ -362,5 +375,8 @@ new Chart(cashWeeklyCtx, {
         }
     }
 });
+});
 </script>
+@endpush
+
 @endsection
