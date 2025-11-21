@@ -3,18 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Sales Analytics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-    </style>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Register - Sales Analytics</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 py-12">
-    
+
     <div class="w-full max-w-md">
         <!-- Logo/Brand -->
         <div class="text-center mb-8">
@@ -31,7 +25,7 @@
 
         <!-- Register Form Card -->
         <div class="bg-white rounded-3xl shadow-xl border border-gray-200 p-8">
-            
+
             @if ($errors->any())
                 <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">
                     <ul class="list-disc list-inside">
@@ -48,7 +42,7 @@
                 <!-- Name -->
                 <div>
                     <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                    <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus
+                    <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         placeholder="John Doe">
                 </div>
@@ -56,7 +50,7 @@
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" required
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="email"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         placeholder="you@example.com">
                 </div>
@@ -64,7 +58,7 @@
                 <!-- Password -->
                 <div>
                     <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                    <input id="password" type="password" name="password" required
+                    <input id="password" type="password" name="password" required autocomplete="new-password"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         placeholder="Minimum 8 characters">
                     <p class="text-xs text-gray-500 mt-1">Use 8+ characters with mix of letters & numbers</p>
@@ -73,7 +67,7 @@
                 <!-- Confirm Password -->
                 <div>
                     <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
-                    <input id="password_confirmation" type="password" name="password_confirmation" required
+                    <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         placeholder="Re-enter your password">
                 </div>
@@ -95,7 +89,7 @@
 
         <!-- Login Link -->
         <p class="text-center mt-6 text-gray-600">
-            Already have an account? 
+            Already have an account?
             <a href="{{ route('login') }}" class="font-semibold text-blue-600 hover:text-blue-700">
                 Sign in
             </a>

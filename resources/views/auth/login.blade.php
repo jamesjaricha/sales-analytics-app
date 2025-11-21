@@ -3,22 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login - Sales Analytics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-    </style>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
-    
+
     <div class="w-full max-w-md">
         <!-- Logo/Brand -->
         <div class="text-center mb-8">
@@ -35,7 +25,7 @@
 
         <!-- Login Form Card -->
         <div class="bg-white rounded-3xl shadow-xl border border-gray-200 p-8">
-            
+
             @if (session('status'))
                 <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6 text-sm">
                     {{ session('status') }}
@@ -58,7 +48,7 @@
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         placeholder="you@example.com">
                 </div>
@@ -66,7 +56,7 @@
                 <!-- Password -->
                 <div>
                     <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                    <input id="password" type="password" name="password" required
+                    <input id="password" type="password" name="password" required autocomplete="current-password"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                         placeholder="Enter your password">
                 </div>

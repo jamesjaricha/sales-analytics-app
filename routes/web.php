@@ -13,20 +13,21 @@ Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:60,1'])->group(func
     Route::get('/sales', [DailySalesController::class, 'index'])->name('sales.index');
     Route::get('/sales/create', [DailySalesController::class, 'create'])->name('sales.create');
     Route::post('/sales', [DailySalesController::class, 'store'])->name('sales.store')->middleware('throttle:10,1');
+    // Sales helpers (specific routes must come before wildcard {id} routes)
+    Route::get('/sales/products/search', [DailySalesController::class, 'searchProducts'])->name('sales.products.search');
+    Route::post('/sales/products/quick-create', [DailySalesController::class, 'quickCreateProduct'])->name('sales.products.quick-create')->middleware('throttle:20,1');
+    Route::get('/sales/drafts', [DailySalesController::class, 'getDraft'])->name('sales.drafts.get');
+    // Sales detail routes (wildcard routes come last)
     Route::get('/sales/{id}', [DailySalesController::class, 'show'])->name('sales.show');
     Route::get('/sales/{id}/pdf', [DailySalesController::class, 'exportPDF'])->name('sales.pdf')->middleware('throttle:20,1');
-    // Sales helpers
-    Route::get('/sales/products/search', [DailySalesController::class, 'searchProducts'])->name('sales.products.search');
-    Route::post('/sales/products/quick-create', [DailySalesController::class, 'quickCreateProduct'])->name('sales.products.quick-create')->middleware('throttle:5,1');
-    Route::get('/sales/drafts', [DailySalesController::class, 'getDraft'])->name('sales.drafts.get');
 
     // Product CRUD - using Route Model Binding for security
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store')->middleware('throttle:10,1');
+    Route::post('/products', [ProductController::class, 'store'])->name('products.store')->middleware('throttle:20,1');
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update')->middleware('throttle:10,1');
-    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy')->middleware('throttle:5,1');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update')->middleware('throttle:20,1');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy')->middleware('throttle:20,1');
 
     // Monthly Analytics Report
     Route::get('/reports/monthly', [MonthlyReportController::class, 'index'])->name('reports.monthly');

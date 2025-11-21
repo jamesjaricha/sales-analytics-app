@@ -3,7 +3,7 @@
 @section('content')
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <!-- Header -->
         <div class="mb-8">
             <div class="flex items-center space-x-4 mb-4">
@@ -39,9 +39,9 @@
                         <label for="name" class="form-label">
                             Product Name <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" 
-                               name="name" 
-                               id="name" 
+                        <input type="text"
+                               name="name"
+                               id="name"
                                value="{{ old('name') }}"
                                class="form-input @error('name') form-input-error @enderror"
                                placeholder="e.g., Clamps"
@@ -56,9 +56,9 @@
                         <label for="sku" class="form-label">
                             SKU (Stock Keeping Unit) <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" 
-                               name="sku" 
-                               id="sku" 
+                        <input type="text"
+                               name="sku"
+                               id="sku"
                                value="{{ old('sku') }}"
                                class="form-input @error('sku') form-input-error @enderror"
                                placeholder="e.g., CLMP-001"
@@ -73,8 +73,8 @@
                         <label for="description" class="form-label">
                             Description
                         </label>
-                        <textarea name="description" 
-                                  id="description" 
+                        <textarea name="description"
+                                  id="description"
                                   rows="3"
                                   class="form-input @error('description') form-input-error @enderror"
                                   placeholder="Optional product description">{{ old('description') }}</textarea>
@@ -89,9 +89,9 @@
                             <label for="price" class="form-label">
                                 Price (ZMW) <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" 
-                                   name="price" 
-                                   id="price" 
+                            <input type="number"
+                                   name="price"
+                                   id="price"
                                    step="0.01"
                                    min="0"
                                    value="{{ old('price') }}"
@@ -108,9 +108,9 @@
                             <label for="cost" class="form-label">
                                 Cost (ZMW) <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" 
-                                   name="cost" 
-                                   id="cost" 
+                            <input type="number"
+                                   name="cost"
+                                   id="cost"
                                    step="0.01"
                                    min="0"
                                    value="{{ old('cost') }}"
@@ -128,9 +128,9 @@
                         <label for="stock_quantity" class="form-label">
                             Stock Quantity <span class="text-red-500">*</span>
                         </label>
-                        <input type="number" 
-                               name="stock_quantity" 
-                               id="stock_quantity" 
+                        <input type="number"
+                               name="stock_quantity"
+                               id="stock_quantity"
                                min="0"
                                value="{{ old('stock_quantity', 0) }}"
                                class="form-input @error('stock_quantity') form-input-error @enderror"

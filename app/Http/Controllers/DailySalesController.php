@@ -241,23 +241,37 @@ class DailySalesController extends Controller
 
     public function quickCreateProduct(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:products,name',
-            'price' => 'required|numeric|min:0',
-            'sku' => 'nullable|string|max:100|unique:products,sku',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:products,name',
+                'price' => 'required|numeric|min:0',
+                'sku' => 'nullable|string|max:100|unique:products,sku',
+                'description' => 'nullable|string|max:1000',
+            ]);
 
-        $product = Product::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            'sku' => $request->sku,
-            'description' => $request->description,
-            'is_active' => true,
-        ]);
+            $product = Product::create([
+                'name' => $validated['name'],
+                'price' => $validated['price'],
+                'sku' => $validated['sku'] ?? 'SKU-' . time(),
+                'description' => $validated['description'] ?? null,
+                'is_active' => true,
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'product' => $product
-        ]);
+            return response()->json([
+                'success' => true,
+                'product' => $product
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create product: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

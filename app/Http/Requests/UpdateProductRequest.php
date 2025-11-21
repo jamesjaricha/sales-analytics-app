@@ -9,10 +9,11 @@ class UpdateProductRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     * Authorization is handled by route middleware, so we return true here.
      */
     public function authorize(): bool
     {
-        return Auth::check() && in_array(Auth::user()->role, ['admin', 'sales_rep']);
+        return true;
     }
 
     /**

@@ -10,16 +10,34 @@ use Illuminate\Http\Request;
 class ProductController extends Controller
 {
     // List all products
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::select(['id', 'name', 'sku', 'price', 'stock_quantity', 'category', 'is_active', 'created_at'])
-            ->orderBy('name')
-            ->paginate(20);
-        
-        return view('products.index', compact('products'));
-    }
+        $query = Product::query();
 
-    // Show create form
+        // Search functionality
+        if ($search = $request->get('search')) {
+            $searchTerm = trim($search);
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('sku', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('category', 'like', '%' . $searchTerm . '%');
+            });
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status !== '' && $request->status !== null) {
+            $query->where('is_active', $request->status == 'active');
+        }
+
+        $query->select(['id', 'name', 'sku', 'price', 'stock_quantity', 'category', 'is_active', 'created_at']);
+
+        $products = $query->orderByDesc('is_active') // Show active products first
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString(); // Preserve query parameters in pagination
+
+        return view('products.index', compact('products'));
+    }    // Show create form
     public function create()
     {
         return view('products.create');
@@ -49,17 +67,16 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Product updated successfully!');
     }
 
-    // Delete product (soft delete would be better for business data)
+    // Toggle product active status (instead of deletion for audit trail)
     public function destroy(Product $product)
     {
-        // Check if product is used in any sales reports before deletion
-        if ($product->dailySalesItems()->exists()) {
-            return redirect()->route('products.index')
-                ->with('error', 'Cannot delete product that has been used in sales reports. Consider deactivating it instead.');
-        }
+        $newStatus = !$product->is_active;
+        $product->update(['is_active' => $newStatus]);
 
-        $product->delete();
+        $message = $newStatus
+            ? 'Product activated successfully!'
+            : 'Product deactivated successfully!';
 
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully!');
+        return redirect()->route('products.index')->with('success', $message);
     }
 }
