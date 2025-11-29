@@ -4,49 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sales Analytics - Modern Sales Tracking & Reporting</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .hero-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .feature-card {
-            transition: all 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
-        
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-    </style>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50">
 
@@ -79,31 +37,31 @@
     <!-- Hero Section -->
     <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-60"></div>
-        
+
         <div class="max-w-7xl mx-auto relative z-10">
             <div class="text-center max-w-4xl mx-auto">
                 <div class="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
                     <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
                     Modern Sales Management Platform
                 </div>
-                
+
                 <h1 class="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
                     Track Sales.<br/>
                     <span class="gradient-text">Grow Your Business.</span>
                 </h1>
-                
+
                 <p class="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
                     Beautiful, powerful sales tracking and analytics platform. Record daily sales, manage inventory, and generate insights—all in one place.
                 </p>
-                
+
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="{{ route('login') }}" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl transition transform hover:-translate-y-1">
                         Login
                     </a>
-                   
+
                 </div>
-                
-              
+
+
         </div>
     </section>
 
@@ -193,7 +151,7 @@
             <div class="absolute top-0 left-0 w-96 h-96 bg-white rounded-full filter blur-3xl animate-float"></div>
             <div class="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
         </div>
-        
+
         <div class="max-w-4xl mx-auto text-center relative z-10">
             <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Transform Your Business?</h2>
             <p class="text-xl text-blue-100 mb-10">
