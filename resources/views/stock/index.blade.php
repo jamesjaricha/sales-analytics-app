@@ -168,7 +168,12 @@
                                                 </a>
                                                 @if(auth()->user()->role === 'admin')
                                                     <span class="text-gray-300">|</span>
-                                                    <button type="button" onclick="openAdjustModal({{ $product->id }}, '{{ $product->name }}', {{ $product->stock_quantity }}, '{{ $product->unit_of_measurement }}')" class="text-green-600 hover:text-green-900">
+                                                    <button type="button" 
+                                                        data-product-id="{{ $product->id }}"
+                                                        data-product-name="{{ $product->name }}"
+                                                        data-stock-quantity="{{ $product->stock_quantity }}"
+                                                        data-unit="{{ $product->unit_of_measurement }}"
+                                                        class="adjust-stock-btn text-green-600 hover:text-green-900">
                                                         Adjust
                                                     </button>
                                                 @endif
@@ -201,8 +206,9 @@
 </div>
 
 <!-- Adjust Stock Modal -->
-<div id="adjustStockModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+<div id="adjustStockModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 p-4">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
         <form id="adjustStockForm" method="POST" action="{{ route('stock.store') }}">
             @csrf
             <div class="px-6 py-4 border-b border-gray-200">
@@ -261,6 +267,19 @@
 </div>
 
 <script>
+// Event delegation for adjust stock buttons
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.adjust-stock-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const productName = this.dataset.productName;
+            const stockQuantity = this.dataset.stockQuantity;
+            const unit = this.dataset.unit;
+            openAdjustModal(productId, productName, stockQuantity, unit);
+        });
+    });
+});
+
 function openAdjustModal(productId, productName, currentStock, unit) {
     document.getElementById('modalProductId').value = productId;
     document.getElementById('modalProductName').textContent = 'Adjust Stock - ' + productName;
@@ -268,11 +287,15 @@ function openAdjustModal(productId, productName, currentStock, unit) {
     document.getElementById('modalQuantity').value = '';
     document.getElementById('modalUnitCost').value = '';
     document.getElementById('modalNotes').value = '';
-    document.getElementById('adjustStockModal').classList.remove('hidden');
+    const modal = document.getElementById('adjustStockModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
 function closeAdjustModal() {
-    document.getElementById('adjustStockModal').classList.add('hidden');
+    const modal = document.getElementById('adjustStockModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
 }
 
 // Close modal on outside click

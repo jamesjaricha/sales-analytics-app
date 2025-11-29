@@ -34,7 +34,7 @@
                         name="name"
                         id="name"
                         value="{{ old('name') }}"
-                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('name') border-red-500 @else border-gray-300 @enderror"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required>
                     @error('name')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -50,7 +50,7 @@
                         name="email"
                         id="email"
                         value="{{ old('email') }}"
-                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('email') border-red-500 @else border-gray-300 @enderror"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required>
                     @error('email')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -64,7 +64,7 @@
                     </label>
                     <select name="role"
                         id="role"
-                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('role') border-red-500 @else border-gray-300 @enderror"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required>
                         <option value="">Select a role</option>
                         <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
@@ -83,7 +83,7 @@
                     <input type="password"
                         name="password"
                         id="password"
-                        class="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('password') border-red-500 @else border-gray-300 @enderror"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         required>
                     @error('password')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
