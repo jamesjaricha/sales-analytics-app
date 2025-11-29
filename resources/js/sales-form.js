@@ -14,13 +14,13 @@ function addItem() {
                 <div class="text-center flex-shrink-0">
                     <div class="text-xs text-gray-600 mb-1">Current</div>
                     <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2">
-                        <span class="quantity-display font-semibold text-blue-700 text-lg transition-transform duration-200">1</span>
+                        <span class="quantity-display font-semibold text-blue-700 text-lg transition-transform duration-200">0</span>
                     </div>
                 </div>
                 <button type="button" onclick="openAddQuantityModal(this.closest('tr'))" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-sm font-medium shadow-sm whitespace-nowrap flex-shrink-0">
                     + Add
                 </button>
-                <input type="hidden" name="items[${itemIndex}][quantity]" class="quantity-input" value="1">
+                <input type="hidden" name="items[${itemIndex}][quantity]" class="quantity-input" value="0">
             </div>
         </td>
         <td>
@@ -621,7 +621,7 @@ function restoreFromAutosave() {
                     it.product_name || "";
                 row.querySelector(".product-search-input").value =
                     it.product_name || "";
-                const quantity = it.quantity || 1;
+                const quantity = it.quantity || 0;
                 row.querySelector(".quantity-input").value = quantity;
                 row.querySelector(".quantity-display").textContent = quantity;
                 row.querySelector(".price-input").value = it.unit_price || 0;
