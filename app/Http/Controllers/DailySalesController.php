@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\DailySalesReport;
 use App\Models\SalesReportDraft;
 use App\Models\Product;
+use App\Models\StockMovement;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -119,13 +121,37 @@ class DailySalesController extends Controller
                     }
                     $qty = isset($item['quantity']) ? (int) $item['quantity'] : 0;
                     $price = isset($item['unit_price']) ? (float) $item['unit_price'] : 0.0;
-                    $report->items()->create([
+
+                    $salesItem = $report->items()->create([
                         'product_id' => $item['product_id'] ?? null,
                         'product_name' => $item['product_name'],
                         'quantity' => $qty,
                         'unit_price' => $price,
                         'total_price' => $qty * $price,
                     ]);
+
+                    // Reduce stock and create stock movement if product_id exists
+                    if (!empty($item['product_id']) && $qty > 0) {
+                        $product = Product::find($item['product_id']);
+                        if ($product && $product->track_stock) {
+                            $stockBefore = $product->stock_quantity;
+                            $product->stock_quantity -= $qty;
+                            $product->save();
+
+                            // Create stock movement record
+                            StockMovement::create([
+                                'product_id' => $product->id,
+                                'type' => 'out',
+                                'quantity' => -$qty,
+                                'stock_before' => $stockBefore,
+                                'stock_after' => $product->stock_quantity,
+                                'notes' => 'Sale - Report #' . $report->id,
+                                'user_id' => Auth::id(),
+                                'reference_type' => 'App\\Models\\DailySalesReport',
+                                'reference_id' => $report->id,
+                            ]);
+                        }
+                    }
                 }
             }
 
@@ -156,13 +182,39 @@ class DailySalesController extends Controller
     }
 
     // List all daily sales reports
-    public function index()
+    public function index(Request $request)
+    {
+        $query = DailySalesReport::with('user');
+
+        // Filter by month
+        if ($request->filled('month')) {
+            $month = $request->month;
+            $query->whereYear('sale_date', substr($month, 0, 4))
+                ->whereMonth('sale_date', substr($month, 5, 2));
+        }
+
+        // Filter by user
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        $reports = $query->orderBy('sale_date', 'desc')->paginate(15);
+
+        // Get all users for filter dropdown
+        $users = User::orderBy('name')->get();
+
+        return view('sales.index', compact('reports', 'users'));
+    }
+
+    // List sales for the logged-in user (sales_rep)
+    public function mySales()
     {
         $reports = DailySalesReport::with('user')
+            ->where('user_id', Auth::id())
             ->orderBy('sale_date', 'desc')
             ->paginate(15);
 
-        return view('sales.index', compact('reports'));
+        return view('sales.my-sales', compact('reports'));
     }
 
     // Show detailed view of a specific sales report

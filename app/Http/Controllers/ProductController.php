@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -61,8 +62,28 @@ class ProductController extends Controller
     // Update product
     public function update(UpdateProductRequest $request, Product $product)
     {
+        // Track stock quantity changes
+        $oldStock = $product->stock_quantity;
+        $newStock = $request->validated()['stock_quantity'] ?? $oldStock;
+
         // Validation is handled by UpdateProductRequest
         $product->update($request->validated());
+
+        // Create stock movement if quantity changed
+        if ($product->track_stock && $oldStock != $newStock) {
+            $difference = $newStock - $oldStock;
+            $type = $difference > 0 ? 'adjustment' : 'adjustment';
+
+            \App\Models\StockMovement::create([
+                'product_id' => $product->id,
+                'type' => $type,
+                'quantity' => $difference,
+                'stock_before' => $oldStock,
+                'stock_after' => $newStock,
+                'user_id' => Auth::id(),
+                'notes' => 'Stock adjusted via product edit',
+            ]);
+        }
 
         return redirect()->route('products.index')->with('success', 'Product updated successfully!');
     }
