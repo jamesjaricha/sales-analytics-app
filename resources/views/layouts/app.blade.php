@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Sales Analytics</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Additional Styles -->
@@ -19,9 +20,13 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     @if(auth()->user()->role === 'admin')
-                        <a href="{{ route('dashboard') }}" class="text-xl font-semibold text-gray-900">Sales Analytics</a>
+                        <a href="{{ route('dashboard') }}" class="flex items-center">
+                            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-8 sm:h-10 w-auto">
+                        </a>
                     @else
-                        <a href="{{ route('sales.create') }}" class="text-xl font-semibold text-gray-900">Sales Analytics</a>
+                        <a href="{{ route('sales.create') }}" class="flex items-center">
+                            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-8 sm:h-10 w-auto">
+                        </a>
                     @endif
                 </div>
 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login - Sales Analytics</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
@@ -12,12 +13,8 @@
     <div class="w-full max-w-md">
         <!-- Logo/Brand -->
         <div class="text-center mb-8">
-            <a href="/" class="inline-flex items-center gap-2 mb-4">
-                <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                </div>
+            <a href="/" class="inline-flex items-center justify-center mb-4">
+                <img src="{{ asset('images/logo.png') }}" alt="Company Logo" class="h-16 sm:h-20 w-auto">
             </a>
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
             <p class="text-gray-600">Sign in to your Sales Analytics account</p>
@@ -75,7 +72,7 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold text-base hover:shadow-lg transition transform hover:-translate-y-0.5">
+                <button type="submit" class="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 rounded-xl font-semibold text-base hover:shadow-lg transition transform hover:-translate-y-0.5">
                     Sign In
                 </button>
             </form>
