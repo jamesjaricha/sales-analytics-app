@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\MonthlyReportController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\DayEndController;
 
 // Redirect root to login - prevents unnecessary processing
 Route::get('/', function () {
@@ -67,6 +68,11 @@ Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(fun
 Route::middleware(['auth', 'role:admin', 'throttle:300,1'])->group(function () {
     // Dashboard - Admin only
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Day-End reconciliation (Module 2, admin only)
+    Route::get('/day-end', [DayEndController::class, 'create'])->name('day-end.create');
+    Route::post('/day-end', [DayEndController::class, 'store'])->name('day-end.store')->middleware('throttle:30,1');
+    Route::get('/day-end/{dayEnd}', [DayEndController::class, 'show'])->name('day-end.show')->whereNumber('dayEnd');
 
     // Sales List - Admin only (view all sales)
     Route::get('/sales', [DailySalesController::class, 'index'])->name('sales.index');

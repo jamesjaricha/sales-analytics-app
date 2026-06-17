@@ -1,0 +1,221 @@
+@extends('layouts.app')
+
+@push('styles')
+<style>[x-cloak]{display:none!important}</style>
+@endpush
+
+@section('content')
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <div class="mb-6">
+            <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900">Day-End Reconciliation</h1>
+            <p class="text-gray-500 mt-1">Trading day: {{ \Carbon\Carbon::parse($summary['business_date'])->format('D, d M Y') }}</p>
+        </div>
+
+        @if($errors->any())
+            <div class="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-800 px-4 py-3 text-sm">
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if($summary['invoice_count'] === 0)
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 text-center">
+                <p class="text-gray-500">No sales have been recorded yet today — there is nothing to reconcile.</p>
+                <a href="{{ route('pos.create') }}" class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium">Go to Point of Sale</a>
+            </div>
+        @else
+        <div x-data="dayEnd" x-cloak>
+            <!-- Step indicator -->
+            <div class="flex items-center justify-between mb-6 text-sm">
+                <template x-for="(label, n) in steps" :key="n">
+                    <div class="flex-1 flex items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-full flex items-center justify-center font-semibold"
+                                x-bind:class="step >= n + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'"
+                                x-text="n + 1"></span>
+                            <span class="hidden sm:inline" x-bind:class="step === n + 1 ? 'text-gray-900 font-semibold' : 'text-gray-400'" x-text="label"></span>
+                        </div>
+                        <div x-show="n < steps.length - 1" class="flex-1 h-px bg-gray-200 mx-2"></div>
+                    </div>
+                </template>
+            </div>
+
+            <form method="POST" action="{{ route('day-end.store') }}">
+                @csrf
+
+                <!-- STEP 1 — Review -->
+                <div x-show="step === 1" class="space-y-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <p class="text-xs text-gray-500">Gross sales</p>
+                            <p class="text-lg font-bold text-gray-900">{{ number_format($summary['gross_sales'], 2) }}</p>
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <p class="text-xs text-gray-500">Cash</p>
+                            <p class="text-lg font-bold text-green-700">{{ number_format($summary['total_cash'], 2) }}</p>
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <p class="text-xs text-gray-500">Bank</p>
+                            <p class="text-lg font-bold text-gray-900">{{ number_format($summary['total_bank'], 2) }}</p>
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <p class="text-xs text-gray-500">Mobile money</p>
+                            <p class="text-lg font-bold text-gray-900">{{ number_format($summary['total_mobile_money'], 2) }}</p>
+                        </div>
+                        <div class="bg-white rounded-xl border border-gray-200 p-4">
+                            <p class="text-xs text-gray-500">Outstanding</p>
+                            <p class="text-lg font-bold text-amber-600">{{ number_format($summary['total_outstanding'], 2) }}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-5 py-3 text-sm font-semibold text-gray-700 border-b border-gray-100">
+                            {{ $summary['invoice_count'] }} invoice{{ $summary['invoice_count'] === 1 ? '' : 's' }} to reconcile
+                        </div>
+                        <div class="divide-y divide-gray-100 max-h-72 overflow-auto">
+                            @foreach($summary['sales'] as $invoice)
+                                <div class="px-5 py-3 flex items-center justify-between gap-2">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 truncate">{{ $invoice->reference }}</p>
+                                        <p class="text-xs text-gray-500">{{ $invoice->created_at->format('H:i') }} · {{ $invoice->payment_method->label() }}@if($invoice->customer_name) · {{ $invoice->customer_name }}@endif</p>
+                                    </div>
+                                    <p class="text-sm font-semibold text-gray-900 shrink-0">ZMW {{ number_format($invoice->total_amount, 2) }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2 — Cash expenses -->
+                <div x-show="step === 2" class="space-y-4">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-semibold text-gray-900">Cash expenses</h2>
+                            <button type="button" x-on:click="addExpense()" class="text-sm text-blue-600 hover:text-blue-700 font-medium">+ Add expense</button>
+                        </div>
+                        <p class="text-sm text-gray-400 mb-3">Money paid out of the cash drawer today (transport, airtime, etc.). Optional.</p>
+
+                        <template x-if="!expenses.length">
+                            <p class="text-sm text-gray-400 py-4 text-center">No expenses added.</p>
+                        </template>
+
+                        <div class="space-y-2">
+                            <template x-for="(e, i) in expenses" :key="i">
+                                <div class="flex gap-2">
+                                    <input type="text" x-bind:name="'expenses['+i+'][description]'" x-model="e.description" placeholder="Description"
+                                        class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                    <input type="number" min="0" step="0.01" x-bind:name="'expenses['+i+'][amount]'" x-model.number="e.amount" placeholder="0.00"
+                                        class="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm">
+                                    <button type="button" x-on:click="removeExpense(i)" class="text-red-500 hover:text-red-700 px-2">✕</button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="flex justify-end mt-4 pt-3 border-t border-gray-200 text-sm">
+                            <span class="text-gray-500 mr-2">Total expenses:</span>
+                            <span class="font-semibold text-red-600">ZMW <span x-text="fmt(expensesTotal)"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3 — Count cash -->
+                <div x-show="step === 3" class="space-y-4">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-1">Count the cash drawer</h2>
+                        <p class="text-sm text-gray-400 mb-4">Enter the physical cash counted, to check against what's expected. Optional.</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Counted cash (ZMW)</label>
+                                <input type="number" min="0" step="0.01" name="counted_cash" x-model.number="counted_cash" placeholder="0.00"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
+                                <div class="flex justify-between"><span class="text-gray-500">Cash sales</span><span class="font-medium">ZMW <span x-text="fmt(totalCash)"></span></span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Less expenses</span><span class="font-medium text-red-600">− ZMW <span x-text="fmt(expensesTotal)"></span></span></div>
+                                <div class="flex justify-between border-t border-gray-200 pt-1"><span class="text-gray-700 font-medium">Expected in drawer</span><span class="font-semibold">ZMW <span x-text="fmt(expectedCash)"></span></span></div>
+                                <template x-if="variance !== null">
+                                    <div class="flex justify-between pt-1">
+                                        <span class="text-gray-700 font-medium">Variance</span>
+                                        <span class="font-semibold" x-bind:class="variance === 0 ? 'text-gray-700' : (variance > 0 ? 'text-green-600' : 'text-red-600')">
+                                            <span x-text="variance > 0 ? '+' : ''"></span>ZMW <span x-text="fmt(variance)"></span>
+                                        </span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4 — Confirm -->
+                <div x-show="step === 4" class="space-y-4">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2 text-sm">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-2">Confirm & approve</h2>
+                        <div class="flex justify-between"><span class="text-gray-500">Gross sales</span><span class="font-medium">ZMW {{ number_format($summary['gross_sales'], 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Cash</span><span class="font-medium">ZMW {{ number_format($summary['total_cash'], 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Cash @ Bank</span><span class="font-medium">ZMW {{ number_format($summary['total_bank'], 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Mobile money</span><span class="font-medium">ZMW {{ number_format($summary['total_mobile_money'], 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Outstanding debt</span><span class="font-medium text-amber-600">ZMW {{ number_format($summary['total_outstanding'], 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Cash expenses</span><span class="font-medium text-red-600">− ZMW <span x-text="fmt(expensesTotal)"></span></span></div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-5 text-center">
+                        <p class="text-sm text-green-700">Cash at hand</p>
+                        <p class="text-4xl font-bold text-green-900 mt-1">ZMW <span x-text="fmt(expectedCash)"></span></p>
+                    </div>
+
+                    <p class="text-xs text-gray-400 text-center">Approving locks today's {{ $summary['invoice_count'] }} invoice{{ $summary['invoice_count'] === 1 ? '' : 's' }} — they can no longer be edited or voided.</p>
+                </div>
+
+                <!-- Wizard controls -->
+                <div class="flex items-center justify-between mt-6">
+                    <button type="button" x-on:click="prev()" x-show="step > 1"
+                        class="px-5 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">Back</button>
+                    <span x-show="step === 1"></span>
+
+                    <button type="button" x-on:click="next()" x-show="step < 4"
+                        class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">Next</button>
+                    <button type="submit" x-show="step === 4"
+                        class="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold">Approve Day-End</button>
+                </div>
+            </form>
+        </div>
+        @endif
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('dayEnd', () => ({
+        step: 1,
+        steps: ['Review', 'Expenses', 'Count cash', 'Confirm'],
+        expenses: [],
+        counted_cash: '',
+        totalCash: @json($summary['total_cash'] ?? 0),
+
+        addExpense() { this.expenses.push({ description: '', amount: '' }); },
+        removeExpense(i) { this.expenses.splice(i, 1); },
+        next() { if (this.step < 4) this.step++; },
+        prev() { if (this.step > 1) this.step--; },
+
+        get expensesTotal() {
+            return this.expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+        },
+        get expectedCash() {
+            return this.totalCash - this.expensesTotal;
+        },
+        get variance() {
+            return this.counted_cash === '' || this.counted_cash === null ? null : (Number(this.counted_cash) - this.expectedCash);
+        },
+        fmt(n) {
+            return Number(n || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        },
+    }));
+});
+</script>
+@endpush

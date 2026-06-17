@@ -19,6 +19,7 @@ class DailySalesReport extends Model
         'total_bank',
         'total_mobile_money',
         'total_outstanding',
+        'counted_cash',
         'approved_by',
         'approved_at',
     ];
@@ -33,6 +34,7 @@ class DailySalesReport extends Model
         'total_bank' => 'decimal:2',
         'total_mobile_money' => 'decimal:2',
         'total_outstanding' => 'decimal:2',
+        'counted_cash' => 'decimal:2',
     ];
 
     public function user()
