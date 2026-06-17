@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailySalesReport;
-use App\Models\SalesReportDraft;
 use App\Models\Product;
+use App\Models\SalesReportDraft;
 use App\Models\StockMovement;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class DailySalesController extends Controller
 {
@@ -69,7 +68,7 @@ class DailySalesController extends Controller
             $totalDeductions = 0;
             if ($request->has('deductions')) {
                 foreach ($request->deductions as $deduction) {
-                    if (!empty($deduction['amount'])) {
+                    if (! empty($deduction['amount'])) {
                         $totalDeductions += $deduction['amount'];
                     }
                 }
@@ -94,6 +93,7 @@ class DailySalesController extends Controller
                     ]
                 );
                 DB::commit();
+
                 return redirect()->route('sales.create')
                     ->with('success', 'Draft saved. You can continue editing anytime.');
             }
@@ -132,7 +132,7 @@ class DailySalesController extends Controller
                     ]);
 
                     // Reduce stock and create stock movement if product_id exists
-                    if (!empty($item['product_id']) && $qty > 0) {
+                    if (! empty($item['product_id']) && $qty > 0) {
                         $product = Product::find($item['product_id']);
                         if ($product && $product->track_stock) {
                             $stockBefore = $product->stock_quantity;
@@ -146,7 +146,7 @@ class DailySalesController extends Controller
                                 'quantity' => -$qty,
                                 'stock_before' => $stockBefore,
                                 'stock_after' => $product->stock_quantity,
-                                'notes' => 'Sale - Report #' . $report->id,
+                                'notes' => 'Sale - Report #'.$report->id,
                                 'user_id' => Auth::id(),
                                 'reference_type' => 'App\\Models\\DailySalesReport',
                                 'reference_id' => $report->id,
@@ -159,7 +159,7 @@ class DailySalesController extends Controller
             // Save deductions
             if ($request->has('deductions')) {
                 foreach ($request->deductions as $deduction) {
-                    if (!empty($deduction['description']) && !empty($deduction['amount'])) {
+                    if (! empty($deduction['description']) && ! empty($deduction['amount'])) {
                         $report->deductions()->create([
                             'description' => $deduction['description'],
                             'amount' => $deduction['amount'],
@@ -189,7 +189,8 @@ class DailySalesController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Error saving report: ' . $e->getMessage())->withInput();
+
+            return back()->with('error', 'Error saving report: '.$e->getMessage())->withInput();
         }
     }
 
@@ -252,7 +253,7 @@ class DailySalesController extends Controller
 
         $pdf = Pdf::loadView('sales.pdf', compact('report', 'monthlyTotals'));
 
-        $filename = 'sales-report-' . $report->sale_date->format('Y-m-d') . '.pdf';
+        $filename = 'sales-report-'.$report->sale_date->format('Y-m-d').'.pdf';
 
         return $pdf->download($filename);
     }
@@ -273,7 +274,7 @@ class DailySalesController extends Controller
                     ->orWhere('stock_quantity', '>', 0);
             })
             ->limit(10)
-            ->get(['id', 'name', 'sku', 'price']);
+            ->get(['id', 'name', 'sku', 'price', 'stock_quantity', 'track_stock']);
 
         return response()->json($products);
     }
@@ -284,7 +285,7 @@ class DailySalesController extends Controller
         // Authorization handled by middleware
 
         $date = $request->query('date');
-        if (!$date) {
+        if (! $date) {
             return response()->json(['success' => false, 'message' => 'date is required'], 422);
         }
 
@@ -292,7 +293,7 @@ class DailySalesController extends Controller
             ->whereDate('sale_date', $date)
             ->first();
 
-        if (!$draft) {
+        if (! $draft) {
             return response()->json(['success' => false]);
         }
 
@@ -323,25 +324,25 @@ class DailySalesController extends Controller
             $product = Product::create([
                 'name' => $validated['name'],
                 'price' => $validated['price'],
-                'sku' => $validated['sku'] ?? 'SKU-' . time(),
+                'sku' => $validated['sku'] ?? 'SKU-'.time(),
                 'description' => $validated['description'] ?? null,
                 'is_active' => true,
             ]);
 
             return response()->json([
                 'success' => true,
-                'product' => $product
+                'product' => $product,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create product: ' . $e->getMessage()
+                'message' => 'Failed to create product: '.$e->getMessage(),
             ], 500);
         }
     }
