@@ -10,19 +10,18 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-{
-    Schema::create('daily_sales_reports', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Who recorded it
-        $table->date('sale_date')->unique(); // One report per day
-        $table->decimal('total_sales_value', 10, 2);
-        $table->decimal('total_deductions', 10, 2)->default(0);
-        $table->decimal('cash_at_hand', 10, 2);
-        $table->text('notes')->nullable();
-        $table->timestamps();
-    });
-}
-
+    {
+        Schema::create('daily_sales_reports', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Who recorded it
+            $table->date('sale_date')->unique(); // One report per day
+            $table->decimal('total_sales_value', 10, 2);
+            $table->decimal('total_deductions', 10, 2)->default(0);
+            $table->decimal('cash_at_hand', 10, 2);
+            $table->text('notes')->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

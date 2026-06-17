@@ -13,11 +13,26 @@ class DailySalesReport extends Model
         'total_deductions',
         'cash_at_hand',
         'notes',
-        'status'
+        'status',
+        // Day-end reconciliation (POS settlement breakdown)
+        'total_cash',
+        'total_bank',
+        'total_mobile_money',
+        'total_outstanding',
+        'approved_by',
+        'approved_at',
     ];
 
     protected $casts = [
         'sale_date' => 'date',
+        'approved_at' => 'datetime',
+        'total_sales_value' => 'decimal:2',
+        'total_deductions' => 'decimal:2',
+        'cash_at_hand' => 'decimal:2',
+        'total_cash' => 'decimal:2',
+        'total_bank' => 'decimal:2',
+        'total_mobile_money' => 'decimal:2',
+        'total_outstanding' => 'decimal:2',
     ];
 
     public function user()
@@ -36,10 +51,34 @@ class DailySalesReport extends Model
     }
 
     /**
+     * POS invoices reconciled into this day-end report.
+     */
+    public function sales()
+    {
+        return $this->hasMany(Sale::class, 'day_end_report_id');
+    }
+
+    /**
+     * Admin who approved the day-end.
+     */
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * A day-end is approved once it has been signed off (approved_at set).
+     */
+    public function isApproved(): bool
+    {
+        return $this->approved_at !== null;
+    }
+
+    /**
      * Get cumulative monthly totals up to and including the specified date
-     * 
-     * @param string|\DateTime $date The date to calculate totals up to
-     * @param int|null $userId Optional user ID to filter by specific user
+     *
+     * @param  string|\DateTime  $date  The date to calculate totals up to
+     * @param  int|null  $userId  Optional user ID to filter by specific user
      * @return array ['total_sales' => float, 'total_deductions' => float, 'cash_at_hand' => float, 'report_count' => int]
      */
     public static function getMonthlyTotalsUpToDate($date, $userId = null)

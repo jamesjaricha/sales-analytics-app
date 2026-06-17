@@ -9,17 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up()
-{
-    Schema::create('deductions', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('daily_sales_report_id')->constrained()->onDelete('cascade');
-        $table->string('description'); // e.g., "Gel Battery Purchase"
-        $table->decimal('amount', 10, 2);
-        $table->timestamps();
-    });
-}
-
+    public function up()
+    {
+        Schema::create('deductions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('daily_sales_report_id')->constrained()->onDelete('cascade');
+            $table->string('description'); // e.g., "Gel Battery Purchase"
+            $table->decimal('amount', 10, 2);
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

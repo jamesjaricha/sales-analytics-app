@@ -9,7 +9,7 @@ class Deduction extends Model
     protected $fillable = [
         'daily_sales_report_id',
         'description',
-        'amount'
+        'amount',
     ];
 
     public function dailySalesReport()

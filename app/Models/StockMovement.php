@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class StockMovement extends Model
 {
@@ -80,7 +80,7 @@ class StockMovement extends Model
     protected function typeBadgeColor(): Attribute
     {
         return Attribute::make(
-            get: fn() => match ($this->type) {
+            get: fn () => match ($this->type) {
                 'in', 'purchase', 'return' => 'green',
                 'out', 'sale' => 'red',
                 'adjustment' => 'yellow',
@@ -96,7 +96,7 @@ class StockMovement extends Model
     protected function typeLabel(): Attribute
     {
         return Attribute::make(
-            get: fn() => match ($this->type) {
+            get: fn () => match ($this->type) {
                 'in' => 'Stock In',
                 'out' => 'Stock Out',
                 'adjustment' => 'Adjustment',

@@ -9,22 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up()
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->string('role')->default('sales_rep'); // Default role for new users
-    });
-}
-
+    public function up()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('role')->default('sales_rep'); // Default role for new users
+        });
+    }
 
     /**
      * Reverse the migrations.
      */
-public function down()
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->dropColumn('role');
-    });
-}
-
+    public function down()
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('role');
+        });
+    }
 };

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
@@ -52,7 +52,7 @@ class Product extends Model
      */
     public function isLowStock()
     {
-        if (!$this->track_stock) {
+        if (! $this->track_stock) {
             return false;
         }
 
@@ -64,7 +64,7 @@ class Product extends Model
      */
     public function isOutOfStock()
     {
-        if (!$this->track_stock) {
+        if (! $this->track_stock) {
             return false;
         }
 
@@ -78,7 +78,7 @@ class Product extends Model
     {
         return Attribute::make(
             get: function () {
-                if (!$this->track_stock) {
+                if (! $this->track_stock) {
                     return 'not_tracked';
                 }
 
@@ -101,7 +101,7 @@ class Product extends Model
     protected function stockStatusColor(): Attribute
     {
         return Attribute::make(
-            get: fn() => match ($this->stock_status) {
+            get: fn () => match ($this->stock_status) {
                 'out_of_stock' => 'red',
                 'low_stock' => 'yellow',
                 'in_stock' => 'green',

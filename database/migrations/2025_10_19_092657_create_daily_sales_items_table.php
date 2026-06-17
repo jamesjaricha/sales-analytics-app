@@ -9,21 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up()
-{
-    Schema::create('daily_sales_items', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('daily_sales_report_id')->constrained()->onDelete('cascade');
-        $table->foreignId('product_id')->nullable()->constrained()->onDelete('set null');
-        $table->string('product_name'); // Store name in case product is deleted
-        $table->integer('quantity');
-        $table->decimal('unit_price', 10, 2);
-        $table->decimal('total_price', 10, 2);
-        $table->timestamps();
-    });
-}
-
-
+    public function up()
+    {
+        Schema::create('daily_sales_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('daily_sales_report_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->nullable()->constrained()->onDelete('set null');
+            $table->string('product_name'); // Store name in case product is deleted
+            $table->integer('quantity');
+            $table->decimal('unit_price', 10, 2);
+            $table->decimal('total_price', 10, 2);
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

@@ -40,7 +40,7 @@ return new class extends Migration
                 'reorder_level',
                 'reorder_quantity',
                 'unit_of_measurement',
-                'track_stock'
+                'track_stock',
             ]);
         });
     }

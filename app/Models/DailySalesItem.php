@@ -12,7 +12,7 @@ class DailySalesItem extends Model
         'product_name',
         'quantity',
         'unit_price',
-        'total_price'
+        'total_price',
     ];
 
     public function dailySalesReport()
