@@ -8,6 +8,7 @@ use App\Http\Controllers\DailySalesController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\MonthlyReportController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\SaleController;
 
 // Redirect root to login - prevents unnecessary processing
 Route::get('/', function () {
@@ -36,7 +37,12 @@ Route::get('/session/ping', function () {
 
 // Combined auth routes for both admin and sales_rep
 Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(function () {
-    // Sales - Recording (both admin and sales_rep)
+    // POS — point-of-sale invoicing (Module 1: new default record screen)
+    Route::get('/pos', [SaleController::class, 'create'])->name('pos.create');
+    Route::post('/pos', [SaleController::class, 'store'])->name('pos.store')->middleware('throttle:120,1');
+    Route::post('/pos/{sale}/void', [SaleController::class, 'void'])->name('pos.void')->whereNumber('sale')->middleware('throttle:60,1');
+
+    // Sales - Recording (both admin and sales_rep) — legacy batch screen (fallback)
     Route::get('/sales/create', [DailySalesController::class, 'create'])->name('sales.create');
     Route::post('/sales', [DailySalesController::class, 'store'])->name('sales.store');
     // My Sales - Sales rep can view their own sales
