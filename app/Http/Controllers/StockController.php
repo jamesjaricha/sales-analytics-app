@@ -7,6 +7,8 @@ use App\Models\StockMovement;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class StockController extends Controller
@@ -23,45 +25,53 @@ class StockController extends Controller
      */
     public function index(Request $request)
     {
-        $lowStockProducts = $this->stockService->getLowStockProducts();
-        $outOfStockProducts = $this->stockService->getOutOfStockProducts();
-        $totalStockValue = $this->stockService->getTotalStockValue();
+        try {
+            $lowStockProducts = $this->stockService->getLowStockProducts();
+            $outOfStockProducts = $this->stockService->getOutOfStockProducts();
+            $totalStockValue = $this->stockService->getTotalStockValue();
 
-        $query = Product::where('track_stock', true)
-            ->where('is_active', true);
+            $query = Product::where('track_stock', true)
+                ->where('is_active', true);
 
-        // Apply search filter
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('sku', 'LIKE', "%{$search}%");
-            });
-        }
-
-        // Apply stock status filter
-        if ($request->filled('stock_filter') && $request->stock_filter !== 'all') {
-            $stockFilter = $request->stock_filter;
-
-            if ($stockFilter === 'in_stock') {
-                $query->where('stock_quantity', '>', 0)
-                    ->whereRaw('stock_quantity > low_stock_threshold');
-            } elseif ($stockFilter === 'low_stock') {
-                $query->where('stock_quantity', '>', 0)
-                    ->whereRaw('stock_quantity <= low_stock_threshold');
-            } elseif ($stockFilter === 'out_of_stock') {
-                $query->where('stock_quantity', '<=', 0);
+            // Apply search filter
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('sku', 'LIKE', "%{$search}%");
+                });
             }
+
+            // Apply stock status filter
+            if ($request->filled('stock_filter') && $request->stock_filter !== 'all') {
+                $stockFilter = $request->stock_filter;
+
+                if ($stockFilter === 'in_stock') {
+                    $query->where('stock_quantity', '>', 0)
+                        ->whereRaw('stock_quantity > low_stock_threshold');
+                } elseif ($stockFilter === 'low_stock') {
+                    $query->where('stock_quantity', '>', 0)
+                        ->whereRaw('stock_quantity <= low_stock_threshold');
+                } elseif ($stockFilter === 'out_of_stock') {
+                    $query->where('stock_quantity', '<=', 0);
+                }
+            }
+
+            $products = $query->orderBy('name')->paginate(30);
+
+            return view('stock.index', compact(
+                'products',
+                'lowStockProducts',
+                'outOfStockProducts',
+                'totalStockValue'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Stock Index Error', [
+                'message' => $e->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+            return redirect()->back()->with('error', 'Unable to load stock data. Please try again.');
         }
-
-        $products = $query->orderBy('name')->paginate(30);
-
-        return view('stock.index', compact(
-            'products',
-            'lowStockProducts',
-            'outOfStockProducts',
-            'totalStockValue'
-        ));
     }
 
     /**
@@ -69,35 +79,53 @@ class StockController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'type' => 'required|in:in,out,adjustment,purchase,return,initial',
-            'quantity' => 'required|integer|min:1',
-            'notes' => 'nullable|string|max:500',
-            'unit_cost' => 'nullable|numeric|min:0',
-        ]);
+        try {
+            $request->validate([
+                'product_id' => 'required|exists:products,id',
+                'type' => 'required|in:in,out,adjustment,purchase,return,initial',
+                'quantity' => 'required|integer|min:1',
+                'notes' => 'nullable|string|max:500',
+                'unit_cost' => 'nullable|numeric|min:0',
+            ]);
 
-        $product = Product::findOrFail($request->product_id);
+            DB::beginTransaction();
 
-        // Calculate adjustment quantity based on type
-        $adjustmentQuantity = match ($request->type) {
-            'in', 'purchase', 'return', 'initial' => $request->quantity,
-            'out', 'adjustment' => -$request->quantity,
-            default => $request->quantity,
-        };
+            $product = Product::findOrFail($request->product_id);
 
-        $this->stockService->adjustStock(
-            product: $product,
-            quantity: $adjustmentQuantity,
-            type: $request->type,
-            userId: Auth::id(),
-            notes: $request->notes,
-            unitCost: $request->unit_cost
-        );
+            // Calculate adjustment quantity based on type
+            $adjustmentQuantity = match ($request->type) {
+                'in', 'purchase', 'return', 'initial' => $request->quantity,
+                'out', 'adjustment' => -$request->quantity,
+                default => $request->quantity,
+            };
 
-        return redirect()
-            ->route('stock.index')
-            ->with('success', "Stock adjusted successfully. {$product->name} now has {$product->fresh()->stock_quantity} units.");
+            $this->stockService->adjustStock(
+                product: $product,
+                quantity: $adjustmentQuantity,
+                type: $request->type,
+                userId: Auth::id(),
+                notes: $request->notes,
+                unitCost: $request->unit_cost
+            );
+
+            DB::commit();
+
+            return redirect()
+                ->route('stock.index')
+                ->with('success', "Stock adjusted successfully. {$product->name} now has {$product->fresh()->stock_quantity} units.");
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e; // Re-throw validation exceptions
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Stock Adjustment Error', [
+                'message' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'product_id' => $request->product_id ?? null,
+            ]);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to adjust stock. Please try again.');
+        }
     }
 
     /**
@@ -105,11 +133,19 @@ class StockController extends Controller
      */
     public function history(Product $product)
     {
-        $movements = $product->stockMovements()
-            ->with('user')
-            ->paginate(50);
+        try {
+            $movements = $product->stockMovements()
+                ->with('user')
+                ->paginate(50);
 
-        return view('stock.history', compact('product', 'movements'));
+            return view('stock.history', compact('product', 'movements'));
+        } catch (\Exception $e) {
+            Log::error('Stock History Error', [
+                'message' => $e->getMessage(),
+                'product_id' => $product->id,
+            ]);
+            return redirect()->back()->with('error', 'Unable to load stock history. Please try again.');
+        }
     }
 
     /**
@@ -127,25 +163,33 @@ class StockController extends Controller
      */
     public function reports(Request $request)
     {
-        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
-        $endDate = $request->input('end_date', now()->format('Y-m-d'));
+        try {
+            $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
+            $endDate = $request->input('end_date', now()->format('Y-m-d'));
 
-        $summary = $this->stockService->getMovementSummary($startDate, $endDate);
-        $totalStockValue = $this->stockService->getTotalStockValue();
+            $summary = $this->stockService->getMovementSummary($startDate, $endDate);
+            $totalStockValue = $this->stockService->getTotalStockValue();
 
-        $recentMovements = StockMovement::dateRange($startDate, $endDate)
-            ->with(['product', 'user'])
-            ->latest()
-            ->limit(100)
-            ->get();
+            $recentMovements = StockMovement::dateRange($startDate, $endDate)
+                ->with(['product', 'user'])
+                ->latest()
+                ->limit(100)
+                ->get();
 
-        return view('stock.reports', compact(
-            'summary',
-            'totalStockValue',
-            'recentMovements',
-            'startDate',
-            'endDate'
-        ));
+            return view('stock.reports', compact(
+                'summary',
+                'totalStockValue',
+                'recentMovements',
+                'startDate',
+                'endDate'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Stock Reports Error', [
+                'message' => $e->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+            return redirect()->back()->with('error', 'Unable to load stock reports. Please try again.');
+        }
     }
 
     /**

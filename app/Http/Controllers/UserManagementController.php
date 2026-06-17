@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 
 class UserManagementController extends Controller
@@ -18,8 +20,15 @@ class UserManagementController extends Controller
      */
     public function index()
     {
-        $users = User::orderBy('name')->paginate(15);
-        return view('users.index', compact('users'));
+        try {
+            $users = User::orderBy('name')->paginate(15);
+            return view('users.index', compact('users'));
+        } catch (\Exception $e) {
+            Log::error('Users Index Error', [
+                'message' => $e->getMessage(),
+            ]);
+            return redirect()->back()->with('error', 'Unable to load users. Please try again.');
+        }
     }
 
     /**
@@ -35,22 +44,38 @@ class UserManagementController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => ['required', 'string', 'in:admin,sales_rep'],
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                'password' => ['required', 'confirmed', Password::defaults()],
+                'role' => ['required', 'string', 'in:admin,sales_rep'],
+            ]);
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-        ]);
+            DB::beginTransaction();
 
-        return redirect()->route('users.index')
-            ->with('success', 'User created successfully!');
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role'],
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('users.index')
+                ->with('success', 'User created successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('User Store Error', [
+                'message' => $e->getMessage(),
+            ]);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create user. Please try again.');
+        }
     }
 
     /**
@@ -66,28 +91,45 @@ class UserManagementController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['required', 'string', 'in:admin,sales_rep'],
-            'password' => ['nullable', 'confirmed', Password::defaults()],
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+                'role' => ['required', 'string', 'in:admin,sales_rep'],
+                'password' => ['nullable', 'confirmed', Password::defaults()],
+            ]);
 
-        $updateData = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'role' => $validated['role'],
-        ];
+            DB::beginTransaction();
 
-        // Only update password if provided
-        if (!empty($validated['password'])) {
-            $updateData['password'] = Hash::make($validated['password']);
+            $updateData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => $validated['role'],
+            ];
+
+            // Only update password if provided
+            if (!empty($validated['password'])) {
+                $updateData['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($updateData);
+
+            DB::commit();
+
+            return redirect()->route('users.index')
+                ->with('success', 'User updated successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('User Update Error', [
+                'message' => $e->getMessage(),
+                'user_id' => $user->id,
+            ]);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to update user. Please try again.');
         }
-
-        $user->update($updateData);
-
-        return redirect()->route('users.index')
-            ->with('success', 'User updated successfully!');
     }
 
     /**

@@ -18,13 +18,14 @@ class DailySalesController extends Controller
     // Show the form to create a new daily sales report
     public function create()
     {
-        $products = Product::where('is_active', true)->get();
-
         // Get monthly totals for current month up to today
         $today = date('Y-m-d');
-        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($today, Auth::id());
+        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($today, null);
 
-        return view('sales.create', compact('products', 'monthlyTotals'));
+        // Pass session lifetime to view for countdown timer (in minutes)
+        $sessionLifetime = config('session.lifetime', 600);
+
+        return view('sales.create', compact('monthlyTotals', 'sessionLifetime'));
     }
 
     // Store the daily sales report
@@ -174,7 +175,18 @@ class DailySalesController extends Controller
 
             DB::commit();
 
-            return redirect()->route('sales.index')->with('success', 'Daily sales report saved successfully!');
+            // Redirect based on user role - with success confirmation
+            if (Auth::user()->role === 'admin') {
+                return redirect()->route('sales.show', $report->id)
+                    ->with('success', 'Daily sales report saved successfully!')
+                    ->with('show_success_modal', true);
+            } else {
+                // Sales reps see their report then can navigate to their sales list
+                return redirect()->route('sales.show', $report->id)
+                    ->with('success', 'Daily sales report saved successfully!')
+                    ->with('show_success_modal', true)
+                    ->with('redirect_to_my_sales', true);
+            }
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Error saving report: ' . $e->getMessage())->withInput();
@@ -223,7 +235,8 @@ class DailySalesController extends Controller
         $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
 
         // Get monthly totals up to this report's date
-        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, $report->user_id);
+        // Get monthly totals for ALL users (company-wide), not just this user
+        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, null);
 
         return view('sales.show', compact('report', 'monthlyTotals'));
     }
@@ -234,7 +247,8 @@ class DailySalesController extends Controller
         $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
 
         // Get monthly totals up to this report's date for PDF
-        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, $report->user_id);
+        // Get monthly totals for ALL users (company-wide) for PDF
+        $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, null);
 
         $pdf = Pdf::loadView('sales.pdf', compact('report', 'monthlyTotals'));
 
@@ -252,6 +266,11 @@ class DailySalesController extends Controller
             ->where(function ($q) use ($query) {
                 $q->where('name', 'LIKE', "%{$query}%")
                     ->orWhere('sku', 'LIKE', "%{$query}%");
+            })
+            ->where(function ($q) {
+                // Exclude out-of-stock items
+                $q->where('track_stock', false)
+                    ->orWhere('stock_quantity', '>', 0);
             })
             ->limit(10)
             ->get(['id', 'name', 'sku', 'price']);

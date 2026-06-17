@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Sales Report - {{ $report->sale_date->format('Y-m-d') }}</title>
@@ -10,39 +11,48 @@
             line-height: 1.5;
             color: #333;
         }
+
         .header {
             text-align: center;
             margin-bottom: 30px;
             border-bottom: 2px solid #333;
             padding-bottom: 10px;
         }
+
         .header h1 {
             margin: 0;
             font-size: 24px;
             color: #000;
         }
+
         .header p {
             margin: 5px 0;
             color: #666;
         }
+
         .info-section {
             margin-bottom: 20px;
         }
+
         .info-section table {
             width: 100%;
         }
+
         .info-section td {
             padding: 5px 0;
         }
+
         .info-label {
             font-weight: bold;
             width: 150px;
         }
+
         table.items {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
+
         table.items th {
             background-color: #f3f4f6;
             border: 1px solid #d1d5db;
@@ -50,20 +60,25 @@
             text-align: left;
             font-weight: bold;
         }
+
         table.items td {
             border: 1px solid #d1d5db;
             padding: 8px;
         }
+
         table.items .text-right {
             text-align: right;
         }
+
         table.items .text-center {
             text-align: center;
         }
+
         .totals-row {
             background-color: #f9fafb;
             font-weight: bold;
         }
+
         .summary {
             margin-top: 30px;
             padding: 15px;
@@ -71,15 +86,19 @@
             border: 2px solid #22c55e;
             border-radius: 8px;
         }
+
         .summary table {
             width: 100%;
         }
+
         .summary td {
             padding: 5px 0;
         }
+
         .summary-label {
             font-weight: bold;
         }
+
         .cash-at-hand {
             font-size: 18px;
             color: #16a34a;
@@ -87,6 +106,7 @@
             padding-top: 10px;
             border-top: 2px solid #22c55e;
         }
+
         .footer {
             margin-top: 40px;
             padding-top: 10px;
@@ -95,6 +115,7 @@
             color: #666;
             text-align: center;
         }
+
         h2 {
             font-size: 16px;
             margin-top: 20px;
@@ -103,29 +124,30 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- Header with Logo and Company Info -->
-<div class="header">
-    <table style="width: 100%; margin-bottom: 20px;">
-        <tr>
-            <td style="width: 20%; text-align: left; vertical-align: middle;">
-                <!-- Logo (uncomment and update path when you add your logo) -->
-                <img src="{{ public_path('images/logo.png') }}" alt="Company Logo" style="max-width: 80px; height: auto;"> 
-            </td>
-            <td style="width: 80%; text-align: center; vertical-align: middle;">
-                <p style="margin: 5px 0; font-size: 11px; color: #dc2626 !important;">
-                    2 EW Tarry Building Cairo Road, Lusaka Zambia<br>
-                    Phone: +260 777 862 690 | Email: info.zambia@ulwazienergy.co.za
-                </p>
-            </td>
-        </tr>
-    </table>
-    <div style="text-align: center; border-top: 2px solid green; padding-top: 10px; margin-top: 10px;">
-        <h2 style="margin: 5px 0; font-size: 18px;">Daily Sales Report</h2>
-        <p style="margin: 5px 0; color: #376F4B;">{{ $report->sale_date->format('l, F d, Y') }}</p>
+    <div class="header">
+        <table style="width: 100%; margin-bottom: 20px;">
+            <tr>
+                <td style="width: 20%; text-align: left; vertical-align: middle;">
+                    <!-- Logo (uncomment and update path when you add your logo) -->
+                    <img src="{{ public_path('images/logo.png') }}" alt="Company Logo" style="max-width: 80px; height: auto;">
+                </td>
+                <td style="width: 80%; text-align: center; vertical-align: middle;">
+                    <p style="margin: 5px 0; font-size: 11px; color: #dc2626 !important;">
+                        2 EW Tarry Building Cairo Road, Lusaka Zambia<br>
+                        Phone: +260 777 862 690 | Email: info.zambia@ulwazienergy.co.za
+                    </p>
+                </td>
+            </tr>
+        </table>
+        <div style="text-align: center; border-top: 2px solid green; padding-top: 10px; margin-top: 10px;">
+            <h2 style="margin: 5px 0; font-size: 18px;">Daily Sales Report</h2>
+            <p style="margin: 5px 0; color: #376F4B;">{{ $report->sale_date->format('l, F d, Y') }}</p>
+        </div>
     </div>
-</div>
 
 
     <!-- Report Info -->
@@ -155,12 +177,12 @@
         </thead>
         <tbody>
             @foreach($report->items as $item)
-                <tr>
-                    <td>{{ $item->product_name }}</td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-right">ZMW {{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-right">ZMW {{ number_format($item->total_price, 2) }}</td>
-                </tr>
+            <tr>
+                <td>{{ $item->product_name }}</td>
+                <td class="text-center">{{ $item->quantity }}</td>
+                <td class="text-right">ZMW {{ number_format($item->unit_price, 2) }}</td>
+                <td class="text-right">ZMW {{ number_format($item->total_price, 2) }}</td>
+            </tr>
             @endforeach
             <tr class="totals-row">
                 <td colspan="3" class="text-right">Total Sales Value:</td>
@@ -171,27 +193,27 @@
 
     <!-- Deductions -->
     @if($report->deductions->count() > 0)
-        <h2>Deductions</h2>
-        <table class="items">
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th class="text-right" style="width: 150px;">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($report->deductions as $deduction)
-                    <tr>
-                        <td>{{ $deduction->description }}</td>
-                        <td class="text-right">ZMW {{ number_format($deduction->amount, 2) }}</td>
-                    </tr>
-                @endforeach
-                <tr class="totals-row">
-                    <td class="text-right">Total Deductions:</td>
-                    <td class="text-right">ZMW {{ number_format($report->total_deductions, 2) }}</td>
-                </tr>
-            </tbody>
-        </table>
+    <h2>Deductions</h2>
+    <table class="items">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right" style="width: 150px;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($report->deductions as $deduction)
+            <tr>
+                <td>{{ $deduction->description }}</td>
+                <td class="text-right">ZMW {{ number_format($deduction->amount, 2) }}</td>
+            </tr>
+            @endforeach
+            <tr class="totals-row">
+                <td class="text-right">Total Deductions:</td>
+                <td class="text-right">ZMW {{ number_format($report->total_deductions, 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
     @endif
 
     <!-- Summary -->
@@ -212,7 +234,9 @@
         </table>
     </div>
 
-    <!-- Monthly Cumulative Sales -->
+
+    <!-- Monthly Cumulative Sales - Admin Only -->
+    @if(auth()->check() && auth()->user()->role === 'admin')
     <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #fef3c7 50%, #fee2e2 100%); border: 3px solid #f97316; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
         <h2 style="margin: 0 0 10px 0; color: #c2410c; font-size: 14px; font-weight: bold;">
             📊 Total Monthly Sales ({{ $monthlyTotals['month_name'] }})
@@ -224,11 +248,12 @@
             Cumulative from {{ \Carbon\Carbon::parse($monthlyTotals['start_date'])->format('M d') }} to {{ \Carbon\Carbon::parse($monthlyTotals['end_date'])->format('M d, Y') }} ({{ $monthlyTotals['report_count'] }} report(s))
         </p>
     </div>
+    @endif
 
     <!-- Notes -->
     @if($report->notes)
-        <h2>Notes</h2>
-        <p>{{ $report->notes }}</p>
+    <h2>Notes</h2>
+    <p>{{ $report->notes }}</p>
     @endif
 
     <!-- Footer -->
@@ -237,4 +262,5 @@
     </div>
 
 </body>
+
 </html>

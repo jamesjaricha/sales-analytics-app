@@ -6,6 +6,7 @@ use App\Models\DailySalesReport;
 use App\Models\DailySalesItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -13,28 +14,44 @@ class MonthlyReportController extends Controller
 {
     public function index(Request $request)
     {
-        // Default to current month if not specified
-        $month = $request->get('month', now()->format('Y-m'));
-        $date = Carbon::parse($month . '-01');
-        
-        $analytics = $this->getMonthlyAnalytics($date);
-        
-        return view('reports.monthly', compact('analytics', 'month'));
+        try {
+            // Default to current month if not specified
+            $month = $request->get('month', now()->format('Y-m'));
+            $date = Carbon::parse($month . '-01');
+            
+            $analytics = $this->getMonthlyAnalytics($date);
+            
+            return view('reports.monthly', compact('analytics', 'month'));
+        } catch (\Exception $e) {
+            Log::error('Monthly Report Index Error', [
+                'message' => $e->getMessage(),
+                'month' => $request->get('month'),
+            ]);
+            return redirect()->back()->with('error', 'Unable to load monthly report. Please try again.');
+        }
     }
 
     public function exportPDF(Request $request)
     {
-        $month = $request->get('month', now()->format('Y-m'));
-        $date = Carbon::parse($month . '-01');
-        
-        $analytics = $this->getMonthlyAnalytics($date);
-        
-        $pdf = Pdf::loadView('reports.monthly-pdf', compact('analytics'))
-            ->setPaper('a4', 'portrait');
-        
-        $filename = 'monthly-sales-report-' . $date->format('Y-m') . '.pdf';
-        
-        return $pdf->download($filename);
+        try {
+            $month = $request->get('month', now()->format('Y-m'));
+            $date = Carbon::parse($month . '-01');
+            
+            $analytics = $this->getMonthlyAnalytics($date);
+            
+            $pdf = Pdf::loadView('reports.monthly-pdf', compact('analytics'))
+                ->setPaper('a4', 'portrait');
+            
+            $filename = 'monthly-sales-report-' . $date->format('Y-m') . '.pdf';
+            
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Monthly Report PDF Error', [
+                'message' => $e->getMessage(),
+                'month' => $request->get('month'),
+            ]);
+            return redirect()->back()->with('error', 'Unable to generate PDF. Please try again.');
+        }
     }
 
     private function getMonthlyAnalytics($date)
