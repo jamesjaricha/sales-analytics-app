@@ -1,0 +1,24 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-Czp7FtUK.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/sales-form.css": {
+    "file": "assets/sales-form-CuYU6ft7.css",
+    "src": "resources/css/sales-form.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-AwfL1riC.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  },
+  "resources/js/sales-form.js": {
+    "file": "assets/sales-form-9weQ6Uqf.js",
+    "name": "sales-form",
+    "src": "resources/js/sales-form.js",
+    "isEntry": true
+  }
+}
