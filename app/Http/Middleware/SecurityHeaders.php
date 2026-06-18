@@ -36,7 +36,7 @@ class SecurityHeaders
         if (app()->environment('production')) {
             $response->headers->set(
                 'Content-Security-Policy',
-                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' {$googleStyleHosts}; img-src 'self' data:; font-src 'self' {$googleFontHosts}; connect-src 'self';"
+                "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' {$googleStyleHosts}; img-src 'self' data:; font-src 'self' {$googleFontHosts}; connect-src 'self';"
             );
         } else {
             // Development-friendly CSP - Allow Vite dev server
