@@ -167,13 +167,11 @@
                     <p class="text-3xl font-bold mt-1">ZMW {{ number_format($invoices->sum('total_amount'), 2) }}</p>
                 </div>
 
-                @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('day-end.create') }}"
-                        class="flex items-center justify-center gap-2 w-full bg-white border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-semibold py-3 rounded-2xl transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Submit Day-End
-                    </a>
-                @endif
+                <a href="{{ route('day-end.create') }}"
+                    class="flex items-center justify-center gap-2 w-full bg-white border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-semibold py-3 rounded-2xl transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Submit Day-End
+                </a>
 
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200/80 overflow-hidden">
                     <div class="px-5 py-3 text-sm font-semibold text-gray-700 border-b border-gray-100">Today's invoices</div>

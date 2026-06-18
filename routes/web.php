@@ -43,6 +43,12 @@ Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(fun
     Route::post('/pos', [SaleController::class, 'store'])->name('pos.store')->middleware('throttle:120,1');
     Route::post('/pos/{sale}/void', [SaleController::class, 'void'])->name('pos.void')->whereNumber('sale')->middleware('throttle:60,1');
 
+    // Day-End reconciliation — admin and sales_rep can run and view the day-end
+    Route::get('/day-end', [DayEndController::class, 'create'])->name('day-end.create');
+    Route::post('/day-end', [DayEndController::class, 'store'])->name('day-end.store')->middleware('throttle:30,1');
+    Route::get('/day-end/{dayEnd}', [DayEndController::class, 'show'])->name('day-end.show')->whereNumber('dayEnd');
+    Route::get('/day-end/{dayEnd}/pdf', [DayEndController::class, 'pdf'])->name('day-end.pdf')->whereNumber('dayEnd')->middleware('throttle:20,1');
+
     // Batch entry retired — the old URL now redirects to the POS screen
     Route::get('/sales/create', fn () => redirect()->route('pos.create'))->name('sales.create');
     Route::post('/sales', [DailySalesController::class, 'store'])->name('sales.store');
@@ -68,12 +74,6 @@ Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(fun
 Route::middleware(['auth', 'role:admin', 'throttle:300,1'])->group(function () {
     // Dashboard - Admin only
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Day-End reconciliation (Module 2, admin only)
-    Route::get('/day-end', [DayEndController::class, 'create'])->name('day-end.create');
-    Route::post('/day-end', [DayEndController::class, 'store'])->name('day-end.store')->middleware('throttle:30,1');
-    Route::get('/day-end/{dayEnd}', [DayEndController::class, 'show'])->name('day-end.show')->whereNumber('dayEnd');
-    Route::get('/day-end/{dayEnd}/pdf', [DayEndController::class, 'pdf'])->name('day-end.pdf')->whereNumber('dayEnd')->middleware('throttle:20,1');
 
     // Sales List - Admin only (view all sales)
     Route::get('/sales', [DailySalesController::class, 'index'])->name('sales.index');

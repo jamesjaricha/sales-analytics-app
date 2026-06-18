@@ -44,12 +44,21 @@ class DayEndControllerTest extends TestCase
         $this->assertSame(2, $report->sales()->count());
     }
 
-    public function test_sales_rep_cannot_access_day_end(): void
+    public function test_sales_rep_can_run_the_day_end(): void
     {
         $rep = User::factory()->create(['role' => 'sales_rep']);
+        $this->saleToday('cash', 400);
 
-        $this->actingAs($rep)->get('/day-end')->assertRedirect(route('login'));
-        $this->actingAs($rep)->post('/day-end')->assertRedirect(route('login'));
+        $this->actingAs($rep)->get('/day-end')->assertOk();
+
+        $response = $this->actingAs($rep)->post('/day-end', [
+            'counted_cash' => 400,
+        ]);
+
+        $report = DailySalesReport::whereNotNull('approved_at')->first();
+        $this->assertNotNull($report);
+        $response->assertRedirect(route('day-end.show', $report));
+        $this->assertSame($rep->id, $report->approved_by);
     }
 
     public function test_guest_cannot_access_day_end(): void
