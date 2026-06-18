@@ -43,8 +43,8 @@ Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(fun
     Route::post('/pos', [SaleController::class, 'store'])->name('pos.store')->middleware('throttle:120,1');
     Route::post('/pos/{sale}/void', [SaleController::class, 'void'])->name('pos.void')->whereNumber('sale')->middleware('throttle:60,1');
 
-    // Sales - Recording (both admin and sales_rep) — legacy batch screen (fallback)
-    Route::get('/sales/create', [DailySalesController::class, 'create'])->name('sales.create');
+    // Batch entry retired — the old URL now redirects to the POS screen
+    Route::get('/sales/create', fn () => redirect()->route('pos.create'))->name('sales.create');
     Route::post('/sales', [DailySalesController::class, 'store'])->name('sales.store');
     // My Sales - Sales rep can view their own sales
     Route::get('/my-sales', [DailySalesController::class, 'mySales'])->name('sales.my-sales');

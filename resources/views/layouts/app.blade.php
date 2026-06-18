@@ -36,7 +36,6 @@
                         <a href="/dashboard" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Dashboard</a>
                     @endif
                     <a href="{{ route('pos.create') }}" class="text-sm font-semibold {{ request()->routeIs('pos.*') ? 'text-blue-600' : 'text-gray-900' }} hover:text-blue-600 transition-colors">New Sale</a>
-                    <a href="{{ route('sales.create') }}" class="text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">Batch Entry</a>
                     @if(auth()->user()->role === 'admin')
                         <a href="{{ route('day-end.create') }}" class="text-sm font-medium {{ request()->routeIs('day-end.*') ? 'text-blue-600' : 'text-gray-700' }} hover:text-gray-900 transition-colors">Day-End</a>
                     <a href="{{ route('sales.index') }}" class="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">View Sales</a>
@@ -75,7 +74,6 @@
                 <a href="/dashboard" class="block text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Dashboard</a>
             @endif
             <a href="{{ route('pos.create') }}" class="block text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors">New Sale (POS)</a>
-            <a href="{{ route('sales.create') }}" class="block text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">Batch Entry</a>
             @if(auth()->user()->role === 'admin')
                 <a href="{{ route('day-end.create') }}" class="block text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">Day-End</a>
             <a href="{{ route('sales.index') }}" class="block text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">View Sales</a>

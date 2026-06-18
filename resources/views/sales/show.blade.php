@@ -42,8 +42,41 @@
             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-6">
                 <p class="text-sm font-medium text-green-700 mb-1">Cash at Hand</p>
                 <h2 class="text-3xl font-bold text-green-900">ZMW {{ number_format($report->cash_at_hand, 2) }}</h2>
+                <p class="text-xs text-green-700 mt-1">Cash {{ number_format($report->total_cash, 2) }} − expenses {{ number_format($report->total_deductions, 2) }}</p>
             </div>
         </div>
+
+        @if($report->isApproved())
+        <!-- Settlement Breakdown (day-end) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Settlement Breakdown</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-green-50 rounded-xl p-4">
+                    <p class="text-xs text-green-700 mb-1">Cash</p>
+                    <p class="text-xl font-bold text-green-700">ZMW {{ number_format($report->total_cash, 2) }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <p class="text-xs text-gray-500 mb-1">Cash @ Bank</p>
+                    <p class="text-xl font-bold text-gray-800">ZMW {{ number_format($report->total_bank, 2) }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-4">
+                    <p class="text-xs text-gray-500 mb-1">Mobile Money</p>
+                    <p class="text-xl font-bold text-gray-800">ZMW {{ number_format($report->total_mobile_money, 2) }}</p>
+                </div>
+                <div class="bg-amber-50 rounded-xl p-4">
+                    <p class="text-xs text-amber-700 mb-1">Outstanding Debt</p>
+                    <p class="text-xl font-bold text-amber-700">ZMW {{ number_format($report->total_outstanding, 2) }}</p>
+                </div>
+            </div>
+            @if($report->counted_cash !== null)
+                @php($variance = (float) $report->counted_cash - (float) $report->cash_at_hand)
+                <p class="text-sm text-gray-500 mt-4">
+                    Counted cash: <span class="font-semibold text-gray-800">ZMW {{ number_format($report->counted_cash, 2) }}</span>
+                    · Variance: <span class="font-semibold {{ $variance == 0 ? 'text-gray-700' : ($variance > 0 ? 'text-green-600' : 'text-red-600') }}">{{ $variance > 0 ? '+' : '' }}ZMW {{ number_format($variance, 2) }}</span>
+                </p>
+            @endif
+        </div>
+        @endif
 
 
         {{-- Monthly Cumulative Sales - Admin Only --}}
@@ -82,7 +115,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($report->items as $item)
+                        @foreach($lineItems as $item)
                         <tr class="border-b border-gray-200">
                             <td class="py-3 px-4 text-sm text-gray-900 border-r border-gray-200">
                                 {{ $item->product_name }}

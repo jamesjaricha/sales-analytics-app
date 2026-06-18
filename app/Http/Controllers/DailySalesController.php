@@ -233,29 +233,44 @@ class DailySalesController extends Controller
     // Show detailed view of a specific sales report
     public function show($id)
     {
-        $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
+        $report = DailySalesReport::with(['items', 'deductions', 'user', 'sales.items'])->findOrFail($id);
+
+        $lineItems = $this->resolveLineItems($report);
 
         // Get monthly totals up to this report's date
         // Get monthly totals for ALL users (company-wide), not just this user
         $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, null);
 
-        return view('sales.show', compact('report', 'monthlyTotals'));
+        return view('sales.show', compact('report', 'monthlyTotals', 'lineItems'));
     }
 
     // Export sales report to PDF
     public function exportPDF($id)
     {
-        $report = DailySalesReport::with(['items', 'deductions', 'user'])->findOrFail($id);
+        $report = DailySalesReport::with(['items', 'deductions', 'user', 'sales.items'])->findOrFail($id);
+
+        $lineItems = $this->resolveLineItems($report);
 
         // Get monthly totals up to this report's date for PDF
         // Get monthly totals for ALL users (company-wide) for PDF
         $monthlyTotals = DailySalesReport::getMonthlyTotalsUpToDate($report->sale_date, null);
 
-        $pdf = Pdf::loadView('sales.pdf', compact('report', 'monthlyTotals'));
+        $pdf = Pdf::loadView('sales.pdf', compact('report', 'monthlyTotals', 'lineItems'));
 
         $filename = 'sales-report-'.$report->sale_date->format('Y-m-d').'.pdf';
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Resolve a report's line items: legacy daily_sales_items when present,
+     * otherwise the POS sale_items from the report's linked invoices (day-end).
+     */
+    private function resolveLineItems(DailySalesReport $report)
+    {
+        return $report->items->isNotEmpty()
+            ? $report->items
+            : $report->sales->flatMap(fn ($sale) => $sale->items);
     }
 
     // Search products for autocomplete

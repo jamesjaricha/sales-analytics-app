@@ -176,7 +176,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($report->items as $item)
+            @foreach($lineItems as $item)
             <tr>
                 <td>{{ $item->product_name }}</td>
                 <td class="text-center">{{ $item->quantity }}</td>
@@ -227,6 +227,24 @@
                 <td class="summary-label">Total Deductions:</td>
                 <td style="text-align: right;">ZMW {{ number_format($report->total_deductions, 2) }}</td>
             </tr>
+            @if($report->isApproved())
+            <tr>
+                <td class="summary-label">Cash:</td>
+                <td style="text-align: right;">ZMW {{ number_format($report->total_cash, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="summary-label">Cash @ Bank:</td>
+                <td style="text-align: right;">ZMW {{ number_format($report->total_bank, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="summary-label">Mobile Money:</td>
+                <td style="text-align: right;">ZMW {{ number_format($report->total_mobile_money, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="summary-label">Outstanding Debt:</td>
+                <td style="text-align: right;">ZMW {{ number_format($report->total_outstanding, 2) }}</td>
+            </tr>
+            @endif
             <tr class="cash-at-hand">
                 <td class="summary-label">Cash at Hand:</td>
                 <td style="text-align: right;">ZMW {{ number_format($report->cash_at_hand, 2) }}</td>
