@@ -11,93 +11,85 @@
         </div>
 
         <!-- KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-
-            <!-- Total Sales Card (matches reports) -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Total Sales</h3>
                 <p class="text-4xl font-bold text-gray-900 mb-1">ZMW {{ number_format($totalSales, 0) }}</p>
                 <p class="text-xs text-gray-400">This month</p>
             </div>
-
-            <!-- Total Reports Card -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <h3 class="text-sm font-medium text-gray-500 mb-2">Sales Reports</h3>
-                <p class="text-4xl font-bold text-gray-900 mb-1">{{ $totalReports }}</p>
-                <p class="text-xs text-gray-400">This month</p>
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Invoices</h3>
+                <p class="text-4xl font-bold text-gray-900 mb-1">{{ $invoiceCount }}</p>
+                <p class="text-xs text-gray-400">This month (POS)</p>
             </div>
-
-            <!-- Avg Daily Sales Card -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                </div>
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
                 <h3 class="text-sm font-medium text-gray-500 mb-2">Avg. Daily Sales</h3>
                 <p class="text-4xl font-bold text-gray-900 mb-1">ZMW {{ number_format($averageDailySales, 2) }}</p>
-                <p class="text-xs text-gray-400">Per report</p>
+                <p class="text-xs text-gray-400">Per active day</p>
             </div>
         </div>
 
-        <!-- Charts Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-
-            <!-- Last 7 Days Sales -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                <div class="flex justify-between items-start mb-8">
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900 mb-1">Last 7 Days</h2>
-                        <p class="text-sm text-gray-400">Compared to previous 7 days</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-3xl font-bold {{ $changePercent >= 0 ? 'text-green-500' : 'text-red-500' }}">
-                            {{ $changePercent >= 0 ? '+' : '' }}{{ number_format($changePercent, 1) }}%
-                        </p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-blue-50 rounded-2xl p-4">
-                        <p class="text-xs text-blue-600 font-medium mb-1">Last 7 Days</p>
-                        <p class="text-2xl font-bold text-blue-600">{{ number_format($last7DaysTotal, 0) }}</p>
+        <!-- Settlement breakdown (this month) + Today -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-1">How customers paid</h2>
+                <p class="text-sm text-gray-400 mb-6">This month, from POS invoices</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-green-50 rounded-2xl p-4">
+                        <p class="text-xs text-green-700 font-medium mb-1">Cash</p>
+                        <p class="text-xl font-bold text-green-700">{{ number_format($settlement['cash'], 0) }}</p>
                     </div>
                     <div class="bg-gray-50 rounded-2xl p-4">
-                        <p class="text-xs text-gray-500 font-medium mb-1">Previous 7 Days</p>
-                        <p class="text-2xl font-bold text-gray-600">{{ number_format($previous7DaysTotal, 0) }}</p>
+                        <p class="text-xs text-gray-500 font-medium mb-1">Cash @ Bank</p>
+                        <p class="text-xl font-bold text-gray-800">{{ number_format($settlement['bank'], 0) }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-2xl p-4">
+                        <p class="text-xs text-gray-500 font-medium mb-1">Mobile Money</p>
+                        <p class="text-xl font-bold text-gray-800">{{ number_format($settlement['mobile_money'], 0) }}</p>
+                    </div>
+                    <div class="bg-amber-50 rounded-2xl p-4">
+                        <p class="text-xs text-amber-700 font-medium mb-1">Outstanding</p>
+                        <p class="text-xl font-bold text-amber-700">{{ number_format($settlement['outstanding'], 0) }}</p>
                     </div>
                 </div>
-                <div style="position: relative; height: 280px;">
-                    <canvas id="weeklyComparisonChart"></canvas>
-                </div>
             </div>
 
-            <!-- Cash at Hand -->
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                <div class="mb-8">
-                    <h2 class="text-xl font-bold text-gray-900 mb-1">Cash at Hand</h2>
-                    <p class="text-sm text-gray-400">Last 7 days comparison</p>
-                </div>
-                <div style="position: relative; height: 340px;">
-                    <canvas id="cashWeeklyChart"></canvas>
+            <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl shadow-sm p-8 text-white">
+                <p class="text-sm text-blue-100">Today's takings</p>
+                <p class="text-4xl font-bold mt-1 mb-4">ZMW {{ number_format($todayTotal, 2) }}</p>
+                <div class="space-y-1 text-sm text-blue-100">
+                    <div class="flex justify-between"><span>Cash</span><span>{{ number_format($todaySettlement['cash'], 2) }}</span></div>
+                    <div class="flex justify-between"><span>Bank</span><span>{{ number_format($todaySettlement['bank'], 2) }}</span></div>
+                    <div class="flex justify-between"><span>Mobile</span><span>{{ number_format($todaySettlement['mobile_money'], 2) }}</span></div>
+                    <div class="flex justify-between"><span>Outstanding</span><span>{{ number_format($todaySettlement['outstanding'], 2) }}</span></div>
                 </div>
             </div>
+        </div>
 
+        <!-- Last 7 Days chart -->
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mb-8">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-1">Last 7 Days</h2>
+                    <p class="text-sm text-gray-400">Compared to previous 7 days</p>
+                </div>
+                <p class="text-3xl font-bold {{ $changePercent >= 0 ? 'text-green-500' : 'text-red-500' }}">
+                    {{ $changePercent >= 0 ? '+' : '' }}{{ number_format($changePercent, 1) }}%
+                </p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-50 rounded-2xl p-4">
+                    <p class="text-xs text-blue-600 font-medium mb-1">Last 7 Days</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ number_format($last7DaysTotal, 0) }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-4">
+                    <p class="text-xs text-gray-500 font-medium mb-1">Previous 7 Days</p>
+                    <p class="text-2xl font-bold text-gray-600">{{ number_format($previous7DaysTotal, 0) }}</p>
+                </div>
+            </div>
+            <div style="position: relative; height: 280px;">
+                <canvas id="weeklyComparisonChart"></canvas>
+            </div>
         </div>
 
         <!-- Top Products -->
@@ -117,28 +109,20 @@
                             <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                 <td class="py-4 px-2">
                                     <div class="flex items-center gap-3">
-                                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-bold">
-                                            {{ $index + 1 }}
-                                        </span>
+                                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-bold">{{ $index + 1 }}</span>
                                         <span class="font-medium text-gray-900">{{ $product->product_name }}</span>
                                     </div>
                                 </td>
                                 <td class="py-4 px-2 text-center">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-700">
-                                        {{ $product->total_quantity }}
-                                    </span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-700">{{ $product->total_quantity }}</span>
                                 </td>
-                                <td class="py-4 px-2 text-right font-bold text-gray-900">
-                                    ZMW {{ number_format($product->total_revenue, 2) }}
-                                </td>
+                                <td class="py-4 px-2 text-right font-bold text-gray-900">ZMW {{ number_format($product->total_revenue, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="py-12 text-center">
-                                    <div class="text-gray-400">
-                                        <p class="text-lg mb-2">No sales data yet</p>
-                                        <p class="text-sm">Start recording sales to see insights</p>
-                                    </div>
+                                <td colspan="3" class="py-12 text-center text-gray-400">
+                                    <p class="text-lg mb-2">No sales data yet</p>
+                                    <p class="text-sm">Start recording sales to see insights</p>
                                 </td>
                             </tr>
                         @endforelse
@@ -148,29 +132,18 @@
         </div>
 
         <!-- Quick Actions -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="{{ route('sales.create') }}" class="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-8 text-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1" style="text-decoration: none;">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold">Record Sales</h3>
-                </div>
-                <p class="text-blue-100">Enter today's sales data</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a href="{{ route('pos.create') }}" class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-8 text-white hover:shadow-2xl transition-all" style="text-decoration: none;">
+                <h3 class="text-2xl font-bold mb-1">New Sale</h3>
+                <p class="text-blue-100">Record a POS invoice</p>
             </a>
-
-            <a href="{{ route('products.index') }}" class="group bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-8 text-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1" style="text-decoration: none;">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-2xl font-bold">Products</h3>
-                </div>
-                <p class="text-green-100">Manage your inventory</p>
+            <a href="{{ route('day-end.create') }}" class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-8 text-white hover:shadow-2xl transition-all" style="text-decoration: none;">
+                <h3 class="text-2xl font-bold mb-1">Day-End</h3>
+                <p class="text-emerald-100">Reconcile &amp; approve today</p>
+            </a>
+            <a href="{{ route('products.index') }}" class="bg-gradient-to-br from-gray-700 to-gray-800 rounded-3xl p-8 text-white hover:shadow-2xl transition-all" style="text-decoration: none;">
+                <h3 class="text-2xl font-bold mb-1">Products</h3>
+                <p class="text-gray-300">Manage your inventory</p>
             </a>
         </div>
 
@@ -179,204 +152,50 @@
 
 @push('scripts')
 <script type="text/javascript">
-// Wait for Chart.js to load
-document.addEventListener('DOMContentLoaded', function() {
-    // Ensure Chart is available
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js is not loaded');
-        return;
-    }
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Chart === 'undefined') { console.error('Chart.js is not loaded'); return; }
+    const el = document.getElementById('weeklyComparisonChart');
+    if (!el) return;
 
-    // Last 7 Days Sales Chart
-    const weeklyComparisonCtx = document.getElementById('weeklyComparisonChart').getContext('2d');
-    new Chart(weeklyComparisonCtx, {
-    type: 'bar',
-    data: {
-        labels: {!! $chartLabels !!},
-        datasets: [
-            {
-                label: 'Last 7 Days',
-                data: {!! $last7DaysValues !!},
-                backgroundColor: 'rgba(37, 99, 235, 0.85)',
-                borderColor: 'rgb(37, 99, 235)',
-                borderWidth: 0,
-                borderRadius: 8,
-                borderSkipped: false,
-            },
-            {
-                label: 'Previous 7 Days',
-                data: {!! $previous7DaysValues !!},
-                backgroundColor: 'rgba(156, 163, 175, 0.5)',
-                borderColor: 'rgb(156, 163, 175)',
-                borderWidth: 0,
-                borderRadius: 8,
-                borderSkipped: false,
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'bottom',
-                labels: {
-                    padding: 20,
-                    font: {
-                        size: 13,
-                        weight: '500'
-                    },
-                    usePointStyle: true,
-                    pointStyle: 'circle'
-                }
-            },
-            tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                borderRadius: 8,
-                titleFont: {
-                    size: 14,
-                    weight: 'bold'
+    new Chart(el.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: {!! $chartLabels !!},
+            datasets: [
+                {
+                    label: 'Last 7 Days',
+                    data: {!! $last7DaysValues !!},
+                    backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                    borderRadius: 8,
+                    borderSkipped: false,
                 },
-                bodyFont: {
-                    size: 13
-                },
-                callbacks: {
-                    label: function(context) {
-                        return context.dataset.label + ': ZMW ' + context.parsed.y.toLocaleString();
-                    }
+                {
+                    label: 'Previous 7 Days',
+                    data: {!! $previous7DaysValues !!},
+                    backgroundColor: 'rgba(156, 163, 175, 0.5)',
+                    borderRadius: 8,
+                    borderSkipped: false,
                 }
-            }
+            ]
         },
-        scales: {
-            x: {
-                grid: {
-                    display: false
-                },
-                ticks: {
-                    font: {
-                        size: 11,
-                        weight: '500'
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { padding: 20, usePointStyle: true, pointStyle: 'circle' } },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) { return context.dataset.label + ': ZMW ' + context.parsed.y.toLocaleString(); }
                     }
                 }
             },
-            y: {
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)'
-                },
-                ticks: {
-                    font: {
-                        size: 11
-                    }
-                }
+            scales: {
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } }
             }
         }
-    }
-});
-
-// Cash at Hand Chart
-const cashWeeklyCtx = document.getElementById('cashWeeklyChart').getContext('2d');
-new Chart(cashWeeklyCtx, {
-    type: 'line',
-    data: {
-        labels: {!! $chartLabels !!},
-        datasets: [
-            {
-                label: 'Last 7 Days',
-                data: {!! $last7DaysCash !!},
-                borderColor: 'rgb(22, 163, 74)',
-                backgroundColor: 'rgba(22, 163, 74, 0.15)',
-                tension: 0.4,
-                fill: true,
-                pointRadius: 6,
-                pointHoverRadius: 8,
-                borderWidth: 3,
-                pointBackgroundColor: 'rgb(22, 163, 74)',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
-            },
-            {
-                label: 'Previous 7 Days',
-                data: {!! $previous7DaysCash !!},
-                borderColor: 'rgb(156, 163, 175)',
-                backgroundColor: 'rgba(156, 163, 175, 0.08)',
-                tension: 0.4,
-                fill: true,
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                borderWidth: 2,
-                pointBackgroundColor: 'rgb(156, 163, 175)',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                borderDash: [5, 5]
-            }
-        ]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                display: true,
-                position: 'bottom',
-                labels: {
-                    padding: 20,
-                    font: {
-                        size: 13,
-                        weight: '500'
-                    },
-                    usePointStyle: true,
-                    pointStyle: 'circle'
-                }
-            },
-            tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                borderRadius: 8,
-                titleFont: {
-                    size: 14,
-                    weight: 'bold'
-                },
-                bodyFont: {
-                    size: 13
-                },
-                callbacks: {
-                    label: function(context) {
-                        return context.dataset.label + ': ZMW ' + context.parsed.y.toLocaleString();
-                    }
-                }
-            }
-        },
-        scales: {
-            x: {
-                grid: {
-                    display: false
-                },
-                ticks: {
-                    font: {
-                        size: 11,
-                        weight: '500'
-                    }
-                }
-            },
-            y: {
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.05)'
-                },
-                ticks: {
-                    font: {
-                        size: 11
-                    }
-                }
-            }
-        }
-    }
-});
+    });
 });
 </script>
 @endpush
-
 @endsection

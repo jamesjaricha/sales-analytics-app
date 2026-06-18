@@ -73,6 +73,7 @@ Route::middleware(['auth', 'role:admin', 'throttle:300,1'])->group(function () {
     Route::get('/day-end', [DayEndController::class, 'create'])->name('day-end.create');
     Route::post('/day-end', [DayEndController::class, 'store'])->name('day-end.store')->middleware('throttle:30,1');
     Route::get('/day-end/{dayEnd}', [DayEndController::class, 'show'])->name('day-end.show')->whereNumber('dayEnd');
+    Route::get('/day-end/{dayEnd}/pdf', [DayEndController::class, 'pdf'])->name('day-end.pdf')->whereNumber('dayEnd')->middleware('throttle:20,1');
 
     // Sales List - Admin only (view all sales)
     Route::get('/sales', [DailySalesController::class, 'index'])->name('sales.index');

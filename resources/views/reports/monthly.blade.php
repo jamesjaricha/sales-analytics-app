@@ -64,6 +64,18 @@
             </div>
         </div>
 
+        <!-- Settlement breakdown -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-1 flex items-center"><span class="text-2xl mr-2">💳</span> How customers paid</h2>
+            <p class="text-sm text-gray-400 mb-4">POS settlement breakdown for the month</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-green-50 rounded-xl p-4"><p class="text-xs text-green-700 mb-1">Cash</p><p class="text-xl font-bold text-green-700">ZMW {{ number_format($analytics['settlement']['cash'], 2) }}</p></div>
+                <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500 mb-1">Cash @ Bank</p><p class="text-xl font-bold text-gray-800">ZMW {{ number_format($analytics['settlement']['bank'], 2) }}</p></div>
+                <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500 mb-1">Mobile Money</p><p class="text-xl font-bold text-gray-800">ZMW {{ number_format($analytics['settlement']['mobile_money'], 2) }}</p></div>
+                <div class="bg-amber-50 rounded-xl p-4"><p class="text-xs text-amber-700 mb-1">Outstanding</p><p class="text-xl font-bold text-amber-700">ZMW {{ number_format($analytics['settlement']['outstanding'], 2) }}</p></div>
+            </div>
+        </div>
+
         <!-- Top Products -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">

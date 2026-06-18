@@ -2,31 +2,35 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DailySalesReport;
 use App\Models\DailySalesItem;
+use App\Models\DailySalesReport;
+use App\Services\ReportingService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 
 class MonthlyReportController extends Controller
 {
+    public function __construct(private readonly ReportingService $reporting) {}
+
     public function index(Request $request)
     {
         try {
             // Default to current month if not specified
             $month = $request->get('month', now()->format('Y-m'));
-            $date = Carbon::parse($month . '-01');
-            
+            $date = Carbon::parse($month.'-01');
+
             $analytics = $this->getMonthlyAnalytics($date);
-            
+
             return view('reports.monthly', compact('analytics', 'month'));
         } catch (\Exception $e) {
             Log::error('Monthly Report Index Error', [
                 'message' => $e->getMessage(),
                 'month' => $request->get('month'),
             ]);
+
             return redirect()->back()->with('error', 'Unable to load monthly report. Please try again.');
         }
     }
@@ -35,21 +39,22 @@ class MonthlyReportController extends Controller
     {
         try {
             $month = $request->get('month', now()->format('Y-m'));
-            $date = Carbon::parse($month . '-01');
-            
+            $date = Carbon::parse($month.'-01');
+
             $analytics = $this->getMonthlyAnalytics($date);
-            
+
             $pdf = Pdf::loadView('reports.monthly-pdf', compact('analytics'))
                 ->setPaper('a4', 'portrait');
-            
-            $filename = 'monthly-sales-report-' . $date->format('Y-m') . '.pdf';
-            
+
+            $filename = 'monthly-sales-report-'.$date->format('Y-m').'.pdf';
+
             return $pdf->download($filename);
         } catch (\Exception $e) {
             Log::error('Monthly Report PDF Error', [
                 'message' => $e->getMessage(),
                 'month' => $request->get('month'),
             ]);
+
             return redirect()->back()->with('error', 'Unable to generate PDF. Please try again.');
         }
     }
@@ -87,9 +92,9 @@ class MonthlyReportController extends Controller
         $bestDays = $reports->sortByDesc('total_sales_value')->take(5)->values();
 
         // Sales by Day of Week
-        $salesByDayOfWeek = $reports->groupBy(function($report) {
+        $salesByDayOfWeek = $reports->groupBy(function ($report) {
             return $report->sale_date->format('l'); // Monday, Tuesday, etc.
-        })->map(function($dayReports) {
+        })->map(function ($dayReports) {
             return [
                 'count' => $dayReports->count(),
                 'total_sales' => $dayReports->sum('total_sales_value'),
@@ -99,14 +104,14 @@ class MonthlyReportController extends Controller
 
         // Sort by day order
         $dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        $salesByDayOfWeek = collect($dayOrder)->mapWithKeys(function($day) use ($salesByDayOfWeek) {
+        $salesByDayOfWeek = collect($dayOrder)->mapWithKeys(function ($day) use ($salesByDayOfWeek) {
             return [$day => $salesByDayOfWeek->get($day, ['count' => 0, 'total_sales' => 0, 'average_sales' => 0])];
         });
 
         // Weekly Performance
-        $weeklyPerformance = $reports->groupBy(function($report) {
-            return 'Week ' . $report->sale_date->weekOfMonth;
-        })->map(function($weekReports) {
+        $weeklyPerformance = $reports->groupBy(function ($report) {
+            return 'Week '.$report->sale_date->weekOfMonth;
+        })->map(function ($weekReports) {
             return [
                 'count' => $weekReports->count(),
                 'total_sales' => $weekReports->sum('total_sales_value'),
@@ -114,7 +119,7 @@ class MonthlyReportController extends Controller
         });
 
         // Sales Trend (day by day)
-        $salesTrend = $reports->map(function($report) {
+        $salesTrend = $reports->map(function ($report) {
             return [
                 'date' => $report->sale_date->format('M d'),
                 'sales' => $report->total_sales_value,
@@ -124,7 +129,11 @@ class MonthlyReportController extends Controller
         // Customer Behavior Insights
         $insights = $this->generateInsights($reports, $topProducts, $salesByDayOfWeek, $averageDailySales);
 
+        // Settlement breakdown (POS era — how customers paid)
+        $settlement = $this->reporting->settlementBreakdown($startOfMonth, $endOfMonth);
+
         return [
+            'settlement' => $settlement,
             'month_name' => $monthName,
             'start_date' => $startOfMonth->format('M d, Y'),
             'end_date' => $endOfMonth->format('M d, Y'),
@@ -152,21 +161,21 @@ class MonthlyReportController extends Controller
             $insights->push([
                 'icon' => '🏆',
                 'title' => 'Best Seller',
-                'description' => "{$bestProduct->product_name} was your top product with {$bestProduct->total_quantity} units sold."
+                'description' => "{$bestProduct->product_name} was your top product with {$bestProduct->total_quantity} units sold.",
             ]);
         }
 
         // Best day of the week
-        $bestDayOfWeek = $salesByDayOfWeek->filter(function($data) {
+        $bestDayOfWeek = $salesByDayOfWeek->filter(function ($data) {
             return $data['count'] > 0;
         })->sortByDesc('average_sales')->first();
-        
+
         if ($bestDayOfWeek) {
             $dayName = $salesByDayOfWeek->search($bestDayOfWeek);
             $insights->push([
                 'icon' => '📅',
                 'title' => 'Peak Day',
-                'description' => "{$dayName} is your strongest sales day with an average of ZMW " . number_format($bestDayOfWeek['average_sales'], 2) . " per report."
+                'description' => "{$dayName} is your strongest sales day with an average of ZMW ".number_format($bestDayOfWeek['average_sales'], 2).' per report.',
             ]);
         }
 
@@ -174,14 +183,14 @@ class MonthlyReportController extends Controller
         if ($reports->count() > 1) {
             $variance = $this->calculateVariance($reports->pluck('total_sales_value')->toArray());
             $consistencyLevel = $variance < 1000000 ? 'high' : ($variance < 5000000 ? 'moderate' : 'variable');
-            
+
             $insights->push([
                 'icon' => '📊',
                 'title' => 'Sales Consistency',
-                'description' => "Your sales show {$consistencyLevel} consistency this month. " . 
-                    ($consistencyLevel === 'high' ? 'Great steady performance!' : 
-                    ($consistencyLevel === 'moderate' ? 'Fairly stable with some variation.' : 
-                    'Consider analyzing what drives high-performing days.'))
+                'description' => "Your sales show {$consistencyLevel} consistency this month. ".
+                    ($consistencyLevel === 'high' ? 'Great steady performance!' :
+                    ($consistencyLevel === 'moderate' ? 'Fairly stable with some variation.' :
+                    'Consider analyzing what drives high-performing days.')),
             ]);
         }
 
@@ -190,32 +199,32 @@ class MonthlyReportController extends Controller
         $insights->push([
             'icon' => '🎯',
             'title' => 'Product Range',
-            'description' => "You sold {$uniqueProducts} different products this month, " . 
-                ($uniqueProducts > 5 ? 'showing good product diversity.' : 'focus on expanding your range for better customer reach.')
+            'description' => "You sold {$uniqueProducts} different products this month, ".
+                ($uniqueProducts > 5 ? 'showing good product diversity.' : 'focus on expanding your range for better customer reach.'),
         ]);
 
         // Performance trend
         if ($reports->count() >= 3) {
             $firstHalf = $reports->take(ceil($reports->count() / 2))->avg('total_sales_value');
             $secondHalf = $reports->slice(ceil($reports->count() / 2))->avg('total_sales_value');
-            
+
             if ($secondHalf > $firstHalf * 1.1) {
                 $insights->push([
                     'icon' => '📈',
                     'title' => 'Growth Trend',
-                    'description' => 'Sales improved in the second half of the month - momentum is building!'
+                    'description' => 'Sales improved in the second half of the month - momentum is building!',
                 ]);
             } elseif ($firstHalf > $secondHalf * 1.1) {
                 $insights->push([
                     'icon' => '⚠️',
                     'title' => 'Attention Needed',
-                    'description' => 'Sales dipped in the second half. Consider promotional strategies to boost performance.'
+                    'description' => 'Sales dipped in the second half. Consider promotional strategies to boost performance.',
                 ]);
             } else {
                 $insights->push([
                     'icon' => '✅',
                     'title' => 'Steady Performance',
-                    'description' => 'Sales remained consistent throughout the month - reliable performance!'
+                    'description' => 'Sales remained consistent throughout the month - reliable performance!',
                 ]);
             }
         }
@@ -226,13 +235,15 @@ class MonthlyReportController extends Controller
     private function calculateVariance($numbers)
     {
         $count = count($numbers);
-        if ($count === 0) return 0;
-        
+        if ($count === 0) {
+            return 0;
+        }
+
         $mean = array_sum($numbers) / $count;
-        $variance = array_sum(array_map(function($x) use ($mean) {
+        $variance = array_sum(array_map(function ($x) use ($mean) {
             return pow($x - $mean, 2);
         }, $numbers)) / $count;
-        
+
         return $variance;
     }
 }

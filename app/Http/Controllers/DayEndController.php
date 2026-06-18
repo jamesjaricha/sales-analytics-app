@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DailySalesReport;
 use App\Services\DayEndService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -59,5 +60,16 @@ class DayEndController extends Controller
         $dayEnd->load(['deductions', 'approvedBy', 'sales' => fn ($q) => $q->latest()]);
 
         return view('day-end.show', ['report' => $dayEnd]);
+    }
+
+    /**
+     * Download an approved day-end as a PDF.
+     */
+    public function pdf(DailySalesReport $dayEnd)
+    {
+        $dayEnd->load(['deductions', 'approvedBy', 'sales' => fn ($q) => $q->latest()]);
+
+        return Pdf::loadView('day-end.pdf', ['report' => $dayEnd])
+            ->download('day-end-'.$dayEnd->sale_date->format('Y-m-d').'.pdf');
     }
 }

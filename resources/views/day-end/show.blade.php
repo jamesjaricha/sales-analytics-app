@@ -22,7 +22,10 @@
                     @endif
                 </p>
             </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Locked</span>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('day-end.pdf', $report) }}" class="text-sm font-medium text-blue-600 hover:text-blue-700">Download PDF</a>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Locked</span>
+            </div>
         </div>
 
         <!-- Settlement breakdown -->
