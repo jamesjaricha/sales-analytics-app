@@ -122,6 +122,44 @@
             margin-bottom: 10px;
             color: #000;
         }
+
+        table.cards {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px;
+            margin-top: 8px;
+        }
+
+        table.cards td.card {
+            border-radius: 8px;
+            padding: 12px 14px;
+            vertical-align: top;
+        }
+
+        .card-label {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .card-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        table.cash-banner {
+            width: 100%;
+            margin-top: 8px;
+            background-color: #16a34a;
+            border-radius: 8px;
+        }
+
+        table.cash-banner td {
+            padding: 14px 16px;
+            color: #ffffff;
+        }
     </style>
 </head>
 
@@ -217,40 +255,52 @@
     @endif
 
     <!-- Summary -->
-    <div class="summary">
-        <table>
-            <tr>
-                <td class="summary-label">Total Sales Value:</td>
-                <td style="text-align: right;">ZMW {{ number_format($report->total_sales_value, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Total Deductions:</td>
-                <td style="text-align: right;">ZMW {{ number_format($report->total_deductions, 2) }}</td>
-            </tr>
-            @if($report->isApproved())
-            <tr>
-                <td class="summary-label">Cash:</td>
-                <td style="text-align: right;">ZMW {{ number_format($report->total_cash, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Cash @ Bank:</td>
-                <td style="text-align: right;">ZMW {{ number_format($report->total_bank, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Mobile Money:</td>
-                <td style="text-align: right;">ZMW {{ number_format($report->total_mobile_money, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="summary-label">Outstanding Debt:</td>
-                <td style="text-align: right;">ZMW {{ number_format($report->total_outstanding, 2) }}</td>
-            </tr>
-            @endif
-            <tr class="cash-at-hand">
-                <td class="summary-label">Cash at Hand:</td>
-                <td style="text-align: right;">ZMW {{ number_format($report->cash_at_hand, 2) }}</td>
-            </tr>
-        </table>
-    </div>
+    <h2>Summary</h2>
+
+    <table class="cards">
+        <tr>
+            <td class="card" style="width: 50%; background-color: #f9fafb; border: 1px solid #e5e7eb;">
+                <div class="card-label" style="color: #6b7280;">Total Sales Value</div>
+                <div class="card-value" style="color: #111827;">ZMW {{ number_format($report->total_sales_value, 2) }}</div>
+            </td>
+            <td class="card" style="width: 50%; background-color: #fef2f2; border: 1px solid #fecaca;">
+                <div class="card-label" style="color: #b91c1c;">Total Deductions</div>
+                <div class="card-value" style="color: #b91c1c;">ZMW {{ number_format($report->total_deductions, 2) }}</div>
+            </td>
+        </tr>
+    </table>
+
+    @if($report->isApproved())
+    <table class="cards">
+        <tr>
+            <td class="card" style="width: 50%; background-color: #f0fdf4; border: 1px solid #bbf7d0;">
+                <div class="card-label" style="color: #15803d;">Cash</div>
+                <div class="card-value" style="color: #166534;">ZMW {{ number_format($report->total_cash, 2) }}</div>
+            </td>
+            <td class="card" style="width: 50%; background-color: #eff6ff; border: 1px solid #bfdbfe;">
+                <div class="card-label" style="color: #1d4ed8;">Cash @ Bank</div>
+                <div class="card-value" style="color: #1e40af;">ZMW {{ number_format($report->total_bank, 2) }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td class="card" style="width: 50%; background-color: #fffbeb; border: 1px solid #fde68a;">
+                <div class="card-label" style="color: #b45309;">Mobile Money</div>
+                <div class="card-value" style="color: #92400e;">ZMW {{ number_format($report->total_mobile_money, 2) }}</div>
+            </td>
+            <td class="card" style="width: 50%; background-color: #fef2f2; border: 1px solid #fecaca;">
+                <div class="card-label" style="color: #b91c1c;">Outstanding Debt</div>
+                <div class="card-value" style="color: #b91c1c;">ZMW {{ number_format($report->total_outstanding, 2) }}</div>
+            </td>
+        </tr>
+    </table>
+    @endif
+
+    <table class="cash-banner">
+        <tr>
+            <td style="font-size: 16px; font-weight: bold;">Cash at Hand</td>
+            <td style="font-size: 22px; font-weight: bold; text-align: right;">ZMW {{ number_format($report->cash_at_hand, 2) }}</td>
+        </tr>
+    </table>
 
 
     <!-- Monthly Cumulative Sales - Admin Only -->
