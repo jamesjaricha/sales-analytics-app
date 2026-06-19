@@ -75,9 +75,9 @@
                 <div class="p-6 text-gray-900">
                     <h3 class="text-lg font-semibold mb-4">Stock Summary</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-blue-50 p-4 rounded">
+                        <div class="bg-brand-50 p-4 rounded">
                             <p class="text-sm text-gray-600">Total Stock Value</p>
-                            <p class="text-2xl font-bold text-blue-600">ZMW {{ number_format($totalStockValue, 2) }}</p>
+                            <p class="text-2xl font-bold text-brand-700 tabular-nums">ZMW {{ number_format($totalStockValue, 2) }}</p>
                         </div>
                         <div class="bg-yellow-50 p-4 rounded">
                             <p class="text-sm text-gray-600">Low Stock Items</p>
@@ -100,21 +100,70 @@
                             <!-- Search Box -->
                             <input type="text" name="search" id="productSearch" placeholder="Search products..."
                                    value="{{ request('search') }}"
-                                   class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64">
+                                   class="px-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent w-64">
                             <!-- Stock Filter -->
-                            <select name="stock_filter" id="stockFilter" onchange="this.form.submit()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <select name="stock_filter" id="stockFilter" onchange="this.form.submit()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                                 <option value="all" {{ request('stock_filter') == 'all' || !request('stock_filter') ? 'selected' : '' }}>All Products</option>
                                 <option value="in_stock" {{ request('stock_filter') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
                                 <option value="low_stock" {{ request('stock_filter') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
                                 <option value="out_of_stock" {{ request('stock_filter') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                             </select>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500">Search</button>
+                            <button type="submit" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">Search</button>
                             @if(request('search') || request('stock_filter'))
                                 <a href="{{ route('stock.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Clear</a>
                             @endif
                         </form>
                     </div>
-                    <div class="overflow-x-auto">
+                    <!-- Mobile cards -->
+                    <div class="md:hidden space-y-3">
+                        @forelse($products as $product)
+                            <div class="rounded-2xl border p-4 {{ $product->stock_status === 'out_of_stock' ? 'bg-red-50 border-red-200' : ($product->stock_status === 'low_stock' ? 'bg-yellow-50 border-yellow-200' : 'bg-white border-gray-200') }}">
+                                <div class="flex justify-between items-start mb-3 gap-2">
+                                    <div class="min-w-0">
+                                        <p class="font-semibold text-gray-900 truncate">{{ $product->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $product->sku ?? '—' }}</p>
+                                    </div>
+                                    @if($product->stock_status === 'out_of_stock')
+                                        <span class="shrink-0 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Out of Stock</span>
+                                    @elseif($product->stock_status === 'low_stock')
+                                        <span class="shrink-0 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Low Stock</span>
+                                    @else
+                                        <span class="shrink-0 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">In Stock</span>
+                                    @endif
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 mb-1">
+                                    <div>
+                                        <p class="text-xs text-gray-500">Stock</p>
+                                        <p class="text-sm font-semibold text-gray-900 tabular-nums">{{ $product->stock_quantity }} {{ $product->unit_of_measurement }}</p>
+                                        <p class="text-xs text-gray-400">Threshold {{ $product->low_stock_threshold }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">Value</p>
+                                        <p class="text-sm font-semibold text-gray-900 tabular-nums">ZMW {{ number_format($product->stock_quantity * (($product->cost > 0) ? $product->cost : $product->price), 2) }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 pt-3 mt-2 border-t border-gray-200/70">
+                                    <a href="{{ route('stock.history', $product) }}" class="flex-1 text-center py-2.5 rounded-lg text-brand-700 font-medium hover:bg-brand-50">History</a>
+                                    @if(auth()->user()->role === 'admin')
+                                        <button type="button"
+                                            data-product-id="{{ $product->id }}"
+                                            data-product-name="{{ $product->name }}"
+                                            data-stock-quantity="{{ $product->stock_quantity }}"
+                                            data-unit="{{ $product->unit_of_measurement }}"
+                                            class="adjust-stock-btn flex-1 text-center py-2.5 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 active:scale-[0.98] [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)]">
+                                            Adjust
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <div class="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500">
+                                No products found with stock tracking enabled.
+                            </div>
+                        @endforelse
+                    </div>
+
+                    <div class="hidden md:block overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -163,17 +212,17 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex gap-2">
-                                                <a href="{{ route('stock.history', $product) }}" class="text-blue-600 hover:text-blue-900">
+                                                <a href="{{ route('stock.history', $product) }}" class="text-brand-600 hover:text-brand-700 font-medium">
                                                     History
                                                 </a>
                                                 @if(auth()->user()->role === 'admin')
                                                     <span class="text-gray-300">|</span>
-                                                    <button type="button" 
+                                                    <button type="button"
                                                         data-product-id="{{ $product->id }}"
                                                         data-product-name="{{ $product->name }}"
                                                         data-stock-quantity="{{ $product->stock_quantity }}"
                                                         data-unit="{{ $product->unit_of_measurement }}"
-                                                        class="adjust-stock-btn text-green-600 hover:text-green-900">
+                                                        class="adjust-stock-btn text-brand-600 hover:text-brand-700 font-medium">
                                                         Adjust
                                                     </button>
                                                 @endif
@@ -225,7 +274,7 @@
 
                 <div>
                     <label for="modalType" class="block text-sm font-medium text-gray-700 mb-2">Movement Type *</label>
-                    <select name="type" id="modalType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select name="type" id="modalType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                         <option value="in">Stock In (Increase)</option>
                         <option value="out">Stock Out (Decrease)</option>
                         <option value="purchase">Purchase (Increase)</option>
@@ -237,20 +286,20 @@
 
                 <div>
                     <label for="modalQuantity" class="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
-                    <input type="number" name="quantity" id="modalQuantity" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="number" name="quantity" id="modalQuantity" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                 </div>
 
                 <div>
                     <label for="modalUnitCost" class="block text-sm font-medium text-gray-700 mb-2">Unit Cost (Optional)</label>
                     <div class="relative">
                         <span class="absolute left-3 top-2.5 text-gray-500">ZMW</span>
-                        <input type="number" name="unit_cost" id="modalUnitCost" step="0.01" min="0" class="w-full pl-14 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="number" name="unit_cost" id="modalUnitCost" step="0.01" min="0" class="w-full pl-14 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                     </div>
                 </div>
 
                 <div>
                     <label for="modalNotes" class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                    <textarea name="notes" id="modalNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    <textarea name="notes" id="modalNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"></textarea>
                 </div>
             </div>
 
@@ -258,7 +307,7 @@
                 <button type="button" onclick="closeAdjustModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                     Cancel
                 </button>
-                <button type="submit" id="adjustSubmitBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed inline-flex items-center gap-2">
+                <button type="submit" id="adjustSubmitBtn" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:bg-gray-300 disabled:cursor-not-allowed inline-flex items-center gap-2 [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">
                     <svg id="adjustSpinner" class="hidden animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
                     <span id="adjustSubmitLabel">Adjust Stock</span>
                 </button>

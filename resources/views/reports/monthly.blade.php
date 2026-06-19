@@ -12,14 +12,14 @@
             </div>
             <div class="flex gap-4">
                 <form action="{{ route('reports.monthly') }}" method="GET" class="flex gap-2">
-                    <input type="month" name="month" value="{{ $month }}" 
-                        class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+                    <input type="month" name="month" value="{{ $month }}"
+                        class="px-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500">
+                    <button type="submit" class="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-semibold [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">
                         View
                     </button>
                 </form>
-                <a href="{{ route('reports.monthly.pdf', ['month' => $month]) }}" 
-                    class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition">
+                <a href="{{ route('reports.monthly.pdf', ['month' => $month]) }}"
+                    class="px-6 py-2 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">
                     Export PDF
                 </a>
             </div>
@@ -28,7 +28,7 @@
         <!-- Key Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Total Sales -->
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
+            <div class="bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl shadow-lg p-6 text-white">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-sm font-medium opacity-90">Total Sales</p>
                     <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
             </div>
 
             <!-- Average Daily Sales -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
+            <div class="bg-gradient-to-br from-slate-500 to-slate-600 rounded-2xl shadow-lg p-6 text-white">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-sm font-medium opacity-90">Avg. Daily Sales</p>
                     <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@
             </div>
 
             <!-- Reports Count -->
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
+            <div class="bg-gradient-to-br from-gray-500 to-gray-600 rounded-2xl shadow-lg p-6 text-white">
                 <div class="flex items-center justify-between mb-2">
                     <p class="text-sm font-medium opacity-90">Reports Filed</p>
                     <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,10 +69,10 @@
             <h2 class="text-xl font-semibold text-gray-900 mb-1">How customers paid</h2>
             <p class="text-sm text-gray-400 mb-4">POS settlement breakdown for the month</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-green-50 rounded-xl p-4"><p class="text-xs text-green-700 mb-1">Cash</p><p class="text-xl font-bold text-green-700">ZMW {{ number_format($analytics['settlement']['cash'], 2) }}</p></div>
-                <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500 mb-1">Cash @ Bank</p><p class="text-xl font-bold text-gray-800">ZMW {{ number_format($analytics['settlement']['bank'], 2) }}</p></div>
-                <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500 mb-1">Mobile Money</p><p class="text-xl font-bold text-gray-800">ZMW {{ number_format($analytics['settlement']['mobile_money'], 2) }}</p></div>
-                <div class="bg-amber-50 rounded-xl p-4"><p class="text-xs text-amber-700 mb-1">Outstanding</p><p class="text-xl font-bold text-amber-700">ZMW {{ number_format($analytics['settlement']['outstanding'], 2) }}</p></div>
+                <div class="bg-brand-50 rounded-xl p-4"><p class="text-xs text-brand-700 mb-1">Cash</p><p class="text-xl font-bold text-brand-700 tabular-nums">ZMW {{ number_format($analytics['settlement']['cash'], 2) }}</p></div>
+                <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500 mb-1">Cash @ Bank</p><p class="text-xl font-bold text-gray-800 tabular-nums">ZMW {{ number_format($analytics['settlement']['bank'], 2) }}</p></div>
+                <div class="bg-gray-50 rounded-xl p-4"><p class="text-xs text-gray-500 mb-1">Mobile Money</p><p class="text-xl font-bold text-gray-800 tabular-nums">ZMW {{ number_format($analytics['settlement']['mobile_money'], 2) }}</p></div>
+                <div class="bg-amber-50 rounded-xl p-4"><p class="text-xs text-amber-700 mb-1">Outstanding</p><p class="text-xl font-bold text-amber-700 tabular-nums">ZMW {{ number_format($analytics['settlement']['outstanding'], 2) }}</p></div>
             </div>
         </div>
 
@@ -105,7 +105,7 @@
                                 </td>
                                 <td class="py-3 px-4 text-sm font-medium text-gray-900">{{ $product->product_name }}</td>
                                 <td class="py-3 px-4 text-sm text-center">
-                                    <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                                    <span class="inline-block px-3 py-1 bg-brand-100 text-brand-800 rounded-full font-semibold tabular-nums">
                                         {{ $product->total_quantity }} units
                                     </span>
                                 </td>
@@ -128,17 +128,17 @@
             <h2 class="text-xl font-semibold text-gray-900 mb-4">Top 5 Sales Days</h2>
             <div class="space-y-3">
                 @forelse($analytics['best_days'] as $index => $day)
-                    <div class="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+                    <div class="flex items-center justify-between p-4 bg-brand-50 rounded-lg border border-brand-200">
                         <div class="flex items-center gap-4">
-                            <span class="text-2xl font-bold text-green-600">{{ $index + 1 }}</span>
+                            <span class="text-2xl font-bold text-brand-700 tabular-nums">{{ $index + 1 }}</span>
                             <div>
                                 <p class="font-semibold text-gray-900">{{ $day->sale_date->format('l, F d, Y') }}</p>
                                 <p class="text-sm text-gray-600">Recorded by {{ $day->user->name }}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-green-600">ZMW {{ number_format($day->total_sales_value, 2) }}</p>
-                            <p class="text-xs text-gray-500">Net: ZMW {{ number_format($day->cash_at_hand, 2) }}</p>
+                            <p class="text-2xl font-bold text-brand-700 tabular-nums">ZMW {{ number_format($day->total_sales_value, 2) }}</p>
+                            <p class="text-xs text-gray-500 tabular-nums">Net: ZMW {{ number_format($day->cash_at_hand, 2) }}</p>
                         </div>
                     </div>
                 @empty
@@ -148,11 +148,11 @@
         </div>
 
         <!-- Insights -->
-        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-sm border-2 border-indigo-200 p-6 mb-8">
+        <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">Key Insights</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($analytics['insights'] as $insight)
-                    <div class="bg-white rounded-lg p-4 border border-indigo-200 shadow-sm">
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                         <h3 class="font-semibold text-gray-900 mb-1">{{ $insight['title'] }}</h3>
                         <p class="text-sm text-gray-600">{{ $insight['description'] }}</p>
                     </div>
@@ -166,12 +166,12 @@
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">Weekly Breakdown</h2>
                 <div class="grid grid-cols-1 md:grid-cols-{{ min($analytics['weekly_performance']->count(), 5) }} gap-4">
                     @foreach($analytics['weekly_performance'] as $week => $data)
-                        <div class="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
-                            <p class="text-sm font-semibold text-purple-700 mb-2">{{ $week }}</p>
-                            <p class="text-3xl font-bold text-purple-600 mb-1">
+                        <div class="text-center p-6 bg-brand-50 rounded-xl border border-brand-200">
+                            <p class="text-sm font-semibold text-brand-700 mb-2">{{ $week }}</p>
+                            <p class="text-3xl font-bold text-brand-700 mb-1 tabular-nums">
                                 ZMW {{ number_format($data['total_sales'], 0) }}
                             </p>
-                            <p class="text-xs text-gray-600">{{ $data['count'] }} report(s)</p>
+                            <p class="text-xs text-gray-600 tabular-nums">{{ $data['count'] }} report(s)</p>
                         </div>
                     @endforeach
                 </div>

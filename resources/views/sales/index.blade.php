@@ -11,8 +11,8 @@
                 <p class="text-gray-500 mt-2">View all recorded daily sales</p>
             </div>
             <a href="{{ route('sales.create') }}"
-                class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-lg hover:shadow-xl">
-                + Record New Sale
+                class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-lg font-medium shadow-sm [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">
+                + New Sale
             </a>
         </div>
 
@@ -29,13 +29,13 @@
                 <div class="flex-1 min-w-[200px]">
                     <label for="month" class="block text-sm font-medium text-gray-700 mb-2">Filter by Month</label>
                     <input type="month" name="month" id="month" value="{{ request('month') }}"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                           class="w-full px-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                 </div>
 
                 <!-- User Filter -->
                 <div class="flex-1 min-w-[200px]">
                     <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">Filter by User</label>
-                    <select name="user_id" id="user_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <select name="user_id" id="user_id" class="w-full px-4 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                         <option value="">All Users</option>
                         @foreach($users as $user)
                             <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
@@ -47,7 +47,7 @@
 
                 <!-- Filter Buttons -->
                 <div class="flex gap-2">
-                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 focus:ring-2 focus:ring-brand-500 [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">
                         Apply Filters
                     </button>
                     @if(request('month') || request('user_id'))
@@ -59,7 +59,7 @@
             </form>
 
             @if(request('month') || request('user_id'))
-                <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                <div class="mt-4 p-3 bg-brand-50 border border-brand-200 rounded-lg text-sm text-brand-700">
                     <strong>Filtered Results:</strong> Showing {{ $reports->total() }} report(s)
                     @if(request('month'))
                         for <strong>{{ \Carbon\Carbon::parse(request('month'))->format('F Y') }}</strong>
@@ -71,8 +71,40 @@
             @endif
         </div>
 
-        <!-- Sales Reports Table -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Sales Reports — mobile cards -->
+        <div class="md:hidden space-y-3">
+            @forelse($reports as $report)
+                <a href="{{ route('sales.show', $report->id) }}"
+                    class="block bg-white rounded-2xl shadow-sm border border-gray-200 p-4 active:scale-[0.99] transition-transform">
+                    <div class="flex justify-between items-start mb-3">
+                        <p class="font-semibold text-gray-900">{{ $report->sale_date->format('D, M d, Y') }}</p>
+                        <p class="text-xs text-gray-500">{{ $report->user->name }}</p>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <p class="text-xs text-gray-500">Sales</p>
+                            <p class="text-sm font-semibold text-gray-900 tabular-nums">{{ number_format($report->total_sales_value, 2) }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Deductions</p>
+                            <p class="text-sm text-red-600 tabular-nums">{{ number_format($report->total_deductions, 2) }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Cash</p>
+                            <p class="text-sm font-bold text-green-600 tabular-nums">{{ number_format($report->cash_at_hand, 2) }}</p>
+                        </div>
+                    </div>
+                </a>
+            @empty
+                <div class="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-500">
+                    <p class="mb-2">No sales reports yet</p>
+                    <a href="{{ route('sales.create') }}" class="text-brand-600 hover:text-brand-700 font-medium">Record your first sale →</a>
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Sales Reports Table (desktop) -->
+        <div class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b border-gray-200">
@@ -104,18 +136,18 @@
                                     {{ $report->user->name }}
                                 </td>
                                 <td class="py-4 px-6 text-sm text-center">
-    <a href="{{ route('sales.show', $report->id) }}"
-        style="color: green; font-weight: 600; text-decoration: none;">
-        View Details
-    </a>
-</td>
+                                    <a href="{{ route('sales.show', $report->id) }}"
+                                        class="inline-flex items-center text-brand-600 hover:text-brand-700 font-semibold">
+                                        View Details
+                                    </a>
+                                </td>
 
                             </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="py-12 text-center text-gray-500">
                                     <p class="text-lg mb-2">No sales reports yet</p>
-                                    <a href="{{ route('sales.create') }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                    <a href="{{ route('sales.create') }}" class="text-brand-600 hover:text-brand-700 font-medium">
                                         Record your first sale →
                                     </a>
                                 </td>
