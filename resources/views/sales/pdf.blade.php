@@ -305,17 +305,21 @@
 
     <!-- Monthly Cumulative Sales - Admin Only -->
     @if(auth()->check() && auth()->user()->role === 'admin')
-    <div style="margin-top: 30px; padding: 20px; background: linear-gradient(135deg, #f0fdf4 0%, #fef3c7 50%, #fee2e2 100%); border: 3px solid #f97316; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <h2 style="margin: 0 0 10px 0; color: #c2410c; font-size: 14px; font-weight: bold;">
-            📊 Total Monthly Sales ({{ $monthlyTotals['month_name'] }})
-        </h2>
-        <p style="margin: 10px 0; font-size: 32px; font-weight: bold; color: #ea580c;">
-            ZMW {{ number_format($monthlyTotals['total_sales'], 2) }}
-        </p>
-        <p style="margin: 5px 0 0 0; font-size: 10px; color: #9a3412; font-weight: 600;">
-            Cumulative from {{ \Carbon\Carbon::parse($monthlyTotals['start_date'])->format('M d') }} to {{ \Carbon\Carbon::parse($monthlyTotals['end_date'])->format('M d, Y') }} ({{ $monthlyTotals['report_count'] }} report(s))
-        </p>
-    </div>
+    <table style="width: 100%; margin-top: 16px; background-color: #fff7ed; border: 1px solid #fdba74; border-radius: 8px;">
+        <tr>
+            <td style="padding: 10px 14px; vertical-align: middle;">
+                <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #c2410c;">
+                    Total Monthly Sales · {{ $monthlyTotals['month_name'] }}
+                </div>
+                <div style="font-size: 9px; color: #9a3412;">
+                    {{ \Carbon\Carbon::parse($monthlyTotals['start_date'])->format('M d') }} – {{ \Carbon\Carbon::parse($monthlyTotals['end_date'])->format('M d, Y') }} · {{ $monthlyTotals['report_count'] }} report(s)
+                </div>
+            </td>
+            <td style="padding: 10px 14px; text-align: right; vertical-align: middle; font-size: 18px; font-weight: bold; color: #ea580c; white-space: nowrap;">
+                ZMW {{ number_format($monthlyTotals['total_sales'], 2) }}
+            </td>
+        </tr>
+    </table>
     @endif
 
     <!-- Notes -->
