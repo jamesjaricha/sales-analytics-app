@@ -158,7 +158,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ $product->unit_of_measurement }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 tabular-nums">
                                             ZMW {{ number_format($product->stock_quantity * (($product->cost > 0) ? $product->cost : $product->price), 2) }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

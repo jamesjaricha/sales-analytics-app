@@ -91,13 +91,13 @@
                                 <td class="py-4 px-6 text-sm text-gray-900">
                                     {{ $report->sale_date->format('D, M d, Y') }}
                                 </td>
-                                <td class="py-4 px-6 text-sm font-semibold text-gray-900">
+                                <td class="py-4 px-6 text-sm font-semibold text-gray-900 tabular-nums">
                                     ZMW {{ number_format($report->total_sales_value, 2) }}
                                 </td>
-                                <td class="py-4 px-6 text-sm text-red-600">
+                                <td class="py-4 px-6 text-sm text-red-600 tabular-nums">
                                     ZMW {{ number_format($report->total_deductions, 2) }}
                                 </td>
-                                <td class="py-4 px-6 text-sm font-bold text-green-600">
+                                <td class="py-4 px-6 text-sm font-bold text-green-600 tabular-nums">
                                     ZMW {{ number_format($report->cash_at_hand, 2) }}
                                 </td>
                                 <td class="py-4 px-6 text-sm text-gray-600">
