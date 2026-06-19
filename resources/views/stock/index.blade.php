@@ -258,8 +258,9 @@
                 <button type="button" onclick="closeAdjustModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                     Cancel
                 </button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Adjust Stock
+                <button type="submit" id="adjustSubmitBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed inline-flex items-center gap-2">
+                    <svg id="adjustSpinner" class="hidden animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                    <span id="adjustSubmitLabel">Adjust Stock</span>
                 </button>
             </div>
         </form>
@@ -277,6 +278,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const unit = this.dataset.unit;
             openAdjustModal(productId, productName, stockQuantity, unit);
         });
+    });
+
+    // Prevent double-submit of a stock adjustment (writes to live inventory)
+    const adjustForm = document.getElementById('adjustStockForm');
+    adjustForm?.addEventListener('submit', function() {
+        const btn = document.getElementById('adjustSubmitBtn');
+        if (btn) btn.disabled = true;
+        document.getElementById('adjustSpinner')?.classList.remove('hidden');
+        const label = document.getElementById('adjustSubmitLabel');
+        if (label) label.textContent = 'Adjusting…';
     });
 });
 

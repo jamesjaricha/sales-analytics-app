@@ -24,7 +24,7 @@
         @if($summary['invoice_count'] === 0)
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 text-center">
                 <p class="text-gray-500">No sales have been recorded yet today — there is nothing to reconcile.</p>
-                <a href="{{ route('pos.create') }}" class="inline-block mt-4 text-blue-600 hover:text-blue-700 font-medium">Go to Point of Sale</a>
+                <a href="{{ route('pos.create') }}" class="inline-block mt-4 text-brand-600 hover:text-brand-700 font-medium">Go to Point of Sale</a>
             </div>
         @else
         <div x-data="dayEnd" x-cloak>
@@ -34,7 +34,7 @@
                     <div class="flex-1 flex items-center">
                         <div class="flex items-center gap-2">
                             <span class="w-7 h-7 rounded-full flex items-center justify-center font-semibold"
-                                x-bind:class="step >= n + 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'"
+                                x-bind:class="step >= n + 1 ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-500'"
                                 x-text="n + 1"></span>
                             <span class="hidden sm:inline" x-bind:class="step === n + 1 ? 'text-gray-900 font-semibold' : 'text-gray-400'" x-text="label"></span>
                         </div>
@@ -43,7 +43,7 @@
                 </template>
             </div>
 
-            <form method="POST" action="{{ route('day-end.store') }}">
+            <form method="POST" action="{{ route('day-end.store') }}" x-on:submit="submitting = true">
                 @csrf
 
                 <!-- STEP 1 — Review -->
@@ -94,7 +94,7 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold text-gray-900">Cash expenses</h2>
-                            <button type="button" x-on:click="addExpense()" class="text-sm text-blue-600 hover:text-blue-700 font-medium">+ Add expense</button>
+                            <button type="button" x-on:click="addExpense()" class="text-sm text-brand-600 hover:text-brand-700 font-medium">+ Add expense</button>
                         </div>
                         <p class="text-sm text-gray-400 mb-3">Money paid out of the cash drawer today (transport, airtime, etc.). Optional.</p>
 
@@ -131,7 +131,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Counted cash (ZMW)</label>
                                 <input type="number" min="0" step="0.01" name="counted_cash" x-model.number="counted_cash" placeholder="0.00"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
                             </div>
                             <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
                                 <div class="flex justify-between"><span class="text-gray-500">Cash sales</span><span class="font-medium">ZMW <span x-text="fmt(totalCash)"></span></span></div>
@@ -177,9 +177,12 @@
                     <span x-show="step === 1"></span>
 
                     <button type="button" x-on:click="next()" x-show="step < 4"
-                        class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">Next</button>
-                    <button type="submit" x-show="step === 4"
-                        class="px-6 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold">Approve Day-End</button>
+                        class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">Next</button>
+                    <button type="submit" x-show="step === 4" x-bind:disabled="submitting"
+                        class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold inline-flex items-center gap-2 [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">
+                        <svg x-show="submitting" x-cloak class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span x-text="submitting ? 'Approving…' : 'Approve Day-End'"></span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -194,6 +197,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('dayEnd', () => ({
         step: 1,
         steps: ['Review', 'Expenses', 'Count cash', 'Confirm'],
+        submitting: false,
         expenses: [],
         counted_cash: '',
         totalCash: @json($summary['total_cash'] ?? 0),

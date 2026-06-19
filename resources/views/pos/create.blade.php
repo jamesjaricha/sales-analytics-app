@@ -35,7 +35,7 @@
 
             <!-- Invoice builder -->
             <div class="lg:col-span-2">
-                <form method="POST" action="{{ route('pos.store') }}">
+                <form method="POST" action="{{ route('pos.store') }}" x-on:submit="submitting = true">
                     @csrf
                     <input type="hidden" name="business_date" value="{{ $businessDate }}">
 
@@ -153,9 +153,10 @@
                         </div>
                     </div>
 
-                    <button type="submit" x-bind:disabled="!canSubmit"
-                        class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl shadow-sm shadow-emerald-600/20 transition">
-                        Record Invoice
+                    <button type="submit" x-bind:disabled="!canSubmit || submitting"
+                        class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.99]">
+                        <svg x-show="submitting" x-cloak class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span x-text="submitting ? 'Recording…' : 'Record Invoice'"></span>
                     </button>
                 </form>
             </div>
@@ -211,6 +212,7 @@ document.addEventListener('alpine:init', () => {
         search: '',
         results: [],
         items: [],
+        submitting: false,
         payment_method: 'cash',
         customer_name: '',
         note: '',
