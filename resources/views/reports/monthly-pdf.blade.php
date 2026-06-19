@@ -184,7 +184,7 @@
 
     <!-- Header -->
     <div class="header">
-        <h1>📊 Monthly Sales Analytics Report</h1>
+        <h1>Monthly Sales Analytics Report</h1>
         <p style="font-size: 14px; font-weight: bold; color: #ea580c;">{{ $analytics['month_name'] }}</p>
         <p>{{ $analytics['start_date'] }} - {{ $analytics['end_date'] }}</p>
     </div>
@@ -210,7 +210,7 @@
 
     <!-- Top Products -->
     <div class="section">
-        <div class="section-title">🏆 Top Performing Products</div>
+        <div class="section-title">Top Performing Products</div>
         <table>
             <thead>
                 <tr>
@@ -243,7 +243,7 @@
 
     <!-- Best Days -->
     <div class="section">
-        <div class="section-title">⭐ Top 5 Sales Days</div>
+        <div class="section-title">Top 5 Sales Days</div>
         @forelse($analytics['best_days'] as $index => $day)
             <div class="best-day">
                 <span style="font-size: 16px; font-weight: bold; color: #047857; float: left; margin-right: 10px;">{{ $index + 1 }}</span>
@@ -262,7 +262,7 @@
     <!-- Weekly Performance -->
     @if($analytics['weekly_performance']->isNotEmpty())
         <div class="section">
-            <div class="section-title">📈 Weekly Breakdown</div>
+            <div class="section-title">Weekly Breakdown</div>
             <table>
                 <thead>
                     <tr>
@@ -286,13 +286,12 @@
 
     <!-- Insights -->
     <div class="section">
-        <div class="section-title">💡 Key Insights & Recommendations</div>
+        <div class="section-title">Key Insights</div>
         <table style="border: none;">
             @foreach($analytics['insights']->chunk(2) as $insightRow)
                 <tr>
                     @foreach($insightRow as $insight)
                         <td style="width: 50%; padding: 12px; border: 2px solid #c7d2fe; background: #eef2ff; vertical-align: top;">
-                            <div style="font-size: 20px; margin-bottom: 5px;">{{ $insight['icon'] }}</div>
                             <div class="insight-title">{{ $insight['title'] }}</div>
                             <div class="insight-text">{{ $insight['description'] }}</div>
                         </td>
@@ -308,7 +307,6 @@
     <!-- Footer -->
     <div class="footer">
         <p>Generated on {{ now()->format('F d, Y h:i A') }} | Sales Analytics System</p>
-        <p style="margin-top: 5px; color: #ea580c; font-weight: bold;">This report provides data-driven insights to help optimize your sales strategy</p>
     </div>
 
 </body>

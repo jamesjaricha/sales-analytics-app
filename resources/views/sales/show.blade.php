@@ -13,7 +13,7 @@
             <div class="flex gap-6">
                 <a href="{{ route('sales.pdf', $report->id) }}"
                     style="background-color: #dc2626 !important; color: white !important; padding: 12px 24px !important; border-radius: 8px !important; font-weight: 600 !important; text-decoration: none !important; display: inline-block !important;">
-                    📄 Download PDF
+                    Download PDF
                 </a>
                 <a href="{{ route('sales.index') }}"
                     style="background-color: #6b7280 !important; color: white !important; padding: 12px 24px !important; border-radius: 8px !important; font-weight: 600 !important; text-decoration: none !important; display: inline-block !important;">

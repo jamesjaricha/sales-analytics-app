@@ -12,18 +12,20 @@
 {{-- Session Countdown Timer --}}
 <div id="sessionTimerBar" class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-green-500 via-blue-500 to-green-500 shadow-md transition-all duration-1000" style="height: 4px;"></div>
 <div id="sessionTimerText" class="fixed top-4 right-4 bg-white shadow-lg rounded-full px-4 py-2 text-sm font-semibold text-gray-700 z-50 border-2 border-green-500 hidden">
-    <span class="text-green-600">⏱️</span> <span id="timeRemaining">10:00:00</span>
+    <span id="timeRemaining">10:00:00</span>
 </div>
 
 {{-- Session Warning Modal --}}
 <div id="sessionWarningModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-[100] flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center transform scale-95 transition-transform">
-        <div class="text-7xl mb-4 animate-bounce">⚠️</div>
+        <div class="flex items-center justify-center mb-4">
+            <svg class="w-16 h-16 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"></path></svg>
+        </div>
         <h3 class="text-2xl font-bold text-gray-900 mb-2">Still Working?</h3>
         <p class="text-gray-600 mb-2">Your session will expire soon!</p>
         <p class="text-lg mb-6">Time remaining: <span id="warningCountdown" class="font-bold text-red-600 text-2xl">15:00</span></p>
         <button onclick="window.SessionManager.refreshSession()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg mb-3">
-            ✓ Yes, I'm Still Here!
+            Yes, I'm Still Here
         </button>
         <p class="text-xs text-gray-500">Your work is auto-saved every 10 seconds</p>
     </div>
@@ -79,7 +81,6 @@
                             </tr>
                         </thead>
                         <tbody id="itemsContainer">
-                            <!-- Items will be added here dynamically -->
                         </tbody>
                     </table>
                 </div>
@@ -105,7 +106,6 @@
                 </div>
 
                 <div id="deductionsContainer" class="space-y-3">
-                    <!-- Deductions will be added here -->
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-200">
@@ -213,11 +213,7 @@
 <script type="module">
     const SessionManager = {
         config: {
-            sessionLifetimeMinutes: {
-                {
-                    $sessionLifetime ?? 600
-                }
-            }, // From backend
+            sessionLifetimeMinutes: {{ $sessionLifetime ?? 600 }},
             warningMinutes: 15, // Show warning 15 min before expiry
             pingInterval: 5 * 60 * 1000, // Ping every 5 minutes
             activityTimeout: 2 * 60 * 1000, // Consider inactive after 2 min
@@ -241,8 +237,6 @@
             this.startActivityTracking();
             this.startPeriodicPing();
             this.state.isActive = true;
-
-            console.log('[SessionManager] Initialized - Session lifetime:', this.config.sessionLifetimeMinutes, 'minutes');
         },
 
         resetSessionTimer() {
@@ -324,7 +318,6 @@
                 modal.querySelector('.bg-white').classList.add('scale-100');
                 modal.querySelector('.bg-white').classList.remove('scale-95');
             }
-            console.log('[SessionManager] Warning shown - Session expiring soon');
         },
 
         hideWarning() {
@@ -347,7 +340,6 @@
 
                 if (response.ok) {
                     this.resetSessionTimer();
-                    console.log('[SessionManager] Session refreshed successfully');
 
                     // Show success feedback
                     const timeRemaining = document.getElementById('timeRemaining');
@@ -360,7 +352,6 @@
 
                     return true;
                 } else {
-                    console.warn('[SessionManager] Refresh failed:', response.status);
                     return false;
                 }
             } catch (error) {
@@ -389,25 +380,16 @@
             this.state.pingTimer = setInterval(async () => {
                 if (this.isUserActive()) {
                     await this.refreshSession();
-                } else {
-                    console.log('[SessionManager] User inactive, skipping ping');
                 }
             }, this.config.pingInterval);
         },
 
         handleSessionExpired() {
-            console.warn('[SessionManager] Session expired!');
             clearInterval(this.state.timerInterval);
             clearInterval(this.state.pingTimer);
 
-            // Try to auto-save if possible
             if (typeof autosaveNow === 'function') {
-                try {
-                    autosaveNow();
-                    console.log('[SessionManager] Auto-saved before expiry');
-                } catch (e) {
-                    console.error('[SessionManager] Auto-save failed:', e);
-                }
+                try { autosaveNow(); } catch (e) {}
             }
 
             alert('Your session has expired. Please save your work and refresh the page.');

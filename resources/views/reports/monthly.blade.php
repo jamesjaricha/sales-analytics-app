@@ -7,7 +7,7 @@
         <!-- Header -->
         <div class="flex justify-between items-start mb-8">
             <div>
-                <h1 class="text-3xl font-semibold text-gray-900">📊 Monthly Sales Analytics</h1>
+                <h1 class="text-3xl font-semibold text-gray-900">Monthly Sales Analytics</h1>
                 <p class="text-gray-500 mt-2">{{ $analytics['month_name'] }}</p>
             </div>
             <div class="flex gap-4">
@@ -20,7 +20,7 @@
                 </form>
                 <a href="{{ route('reports.monthly.pdf', ['month' => $month]) }}" 
                     class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition">
-                    📄 Export PDF
+                    Export PDF
                 </a>
             </div>
         </div>
@@ -66,7 +66,7 @@
 
         <!-- Settlement breakdown -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-1 flex items-center"><span class="text-2xl mr-2">💳</span> How customers paid</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-1">How customers paid</h2>
             <p class="text-sm text-gray-400 mb-4">POS settlement breakdown for the month</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-green-50 rounded-xl p-4"><p class="text-xs text-green-700 mb-1">Cash</p><p class="text-xl font-bold text-green-700">ZMW {{ number_format($analytics['settlement']['cash'], 2) }}</p></div>
@@ -78,10 +78,7 @@
 
         <!-- Top Products -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="text-2xl mr-2">🏆</span>
-                Top Performing Products
-            </h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Top Performing Products</h2>
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b-2 border-gray-300">
@@ -128,10 +125,7 @@
 
         <!-- Best Performing Days -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="text-2xl mr-2">⭐</span>
-                Top 5 Sales Days
-            </h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Top 5 Sales Days</h2>
             <div class="space-y-3">
                 @forelse($analytics['best_days'] as $index => $day)
                     <div class="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
@@ -155,20 +149,12 @@
 
         <!-- Insights -->
         <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-sm border-2 border-indigo-200 p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <span class="text-2xl mr-2">💡</span>
-                Key Insights & Recommendations
-            </h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Key Insights</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($analytics['insights'] as $insight)
                     <div class="bg-white rounded-lg p-4 border border-indigo-200 shadow-sm">
-                        <div class="flex items-start gap-3">
-                            <span class="text-3xl">{{ $insight['icon'] }}</span>
-                            <div>
-                                <h3 class="font-semibold text-gray-900 mb-1">{{ $insight['title'] }}</h3>
-                                <p class="text-sm text-gray-600">{{ $insight['description'] }}</p>
-                            </div>
-                        </div>
+                        <h3 class="font-semibold text-gray-900 mb-1">{{ $insight['title'] }}</h3>
+                        <p class="text-sm text-gray-600">{{ $insight['description'] }}</p>
                     </div>
                 @endforeach
             </div>
@@ -177,10 +163,7 @@
         <!-- Weekly Performance -->
         @if($analytics['weekly_performance']->isNotEmpty())
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                    <span class="text-2xl mr-2">📈</span>
-                    Weekly Breakdown
-                </h2>
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Weekly Breakdown</h2>
                 <div class="grid grid-cols-1 md:grid-cols-{{ min($analytics['weekly_performance']->count(), 5) }} gap-4">
                     @foreach($analytics['weekly_performance'] as $week => $data)
                         <div class="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">

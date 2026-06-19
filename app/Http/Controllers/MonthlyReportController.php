@@ -159,7 +159,6 @@ class MonthlyReportController extends Controller
         if ($topProducts->isNotEmpty()) {
             $bestProduct = $topProducts->first();
             $insights->push([
-                'icon' => '🏆',
                 'title' => 'Best Seller',
                 'description' => "{$bestProduct->product_name} was your top product with {$bestProduct->total_quantity} units sold.",
             ]);
@@ -173,7 +172,6 @@ class MonthlyReportController extends Controller
         if ($bestDayOfWeek) {
             $dayName = $salesByDayOfWeek->search($bestDayOfWeek);
             $insights->push([
-                'icon' => '📅',
                 'title' => 'Peak Day',
                 'description' => "{$dayName} is your strongest sales day with an average of ZMW ".number_format($bestDayOfWeek['average_sales'], 2).' per report.',
             ]);
@@ -185,7 +183,6 @@ class MonthlyReportController extends Controller
             $consistencyLevel = $variance < 1000000 ? 'high' : ($variance < 5000000 ? 'moderate' : 'variable');
 
             $insights->push([
-                'icon' => '📊',
                 'title' => 'Sales Consistency',
                 'description' => "Your sales show {$consistencyLevel} consistency this month. ".
                     ($consistencyLevel === 'high' ? 'Great steady performance!' :
@@ -197,7 +194,6 @@ class MonthlyReportController extends Controller
         // Product diversity
         $uniqueProducts = $topProducts->count();
         $insights->push([
-            'icon' => '🎯',
             'title' => 'Product Range',
             'description' => "You sold {$uniqueProducts} different products this month, ".
                 ($uniqueProducts > 5 ? 'showing good product diversity.' : 'focus on expanding your range for better customer reach.'),
@@ -210,19 +206,16 @@ class MonthlyReportController extends Controller
 
             if ($secondHalf > $firstHalf * 1.1) {
                 $insights->push([
-                    'icon' => '📈',
                     'title' => 'Growth Trend',
                     'description' => 'Sales improved in the second half of the month - momentum is building!',
                 ]);
             } elseif ($firstHalf > $secondHalf * 1.1) {
                 $insights->push([
-                    'icon' => '⚠️',
                     'title' => 'Attention Needed',
                     'description' => 'Sales dipped in the second half. Consider promotional strategies to boost performance.',
                 ]);
             } else {
                 $insights->push([
-                    'icon' => '✅',
                     'title' => 'Steady Performance',
                     'description' => 'Sales remained consistent throughout the month - reliable performance!',
                 ]);
