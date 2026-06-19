@@ -4,6 +4,13 @@
 @tailwind utilities;
 
 @layer base {
+    :root {
+        /* Stronger custom easings — built-in CSS curves are too weak */
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+        --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -23,11 +30,16 @@
 @layer components {
     /* Button Components */
     .btn {
-        @apply inline-flex items-center px-4 py-2 border font-medium rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+        @apply inline-flex items-center px-4 py-2 border font-medium rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-offset-2;
+        transition: background-color 160ms var(--ease-out), transform 160ms var(--ease-out);
+    }
+
+    .btn:active {
+        transform: scale(0.97);
     }
 
     .btn-primary {
-        @apply bg-blue-600 border-transparent text-white hover:bg-blue-700 focus:ring-blue-500;
+        @apply bg-brand-600 border-transparent text-white hover:bg-brand-700 focus:ring-brand-500;
     }
 
     .btn-secondary {
@@ -35,7 +47,7 @@
     }
 
     .btn-danger {
-        @apply bg-red-600 border-transparent text-white hover:bg-red-700 focus:ring-red-500;
+        @apply bg-accent-600 border-transparent text-white hover:bg-accent-700 focus:ring-accent-500;
     }
 
     .btn-sm {
@@ -64,7 +76,7 @@
     }
 
     .alert-info {
-        @apply bg-blue-50 border-blue-200 text-blue-700;
+        @apply bg-brand-50 border-brand-200 text-brand-700;
     }
 
     /* Card Components */
@@ -86,11 +98,11 @@
 
     /* Form Components */
     .form-input {
-        @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
+        @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors;
     }
 
     .form-input-error {
-        @apply border-red-500 focus:ring-red-500 focus:border-red-500;
+        @apply border-accent-500 focus:ring-accent-500 focus:border-accent-500;
     }
 
     .form-label {
@@ -141,14 +153,14 @@
 
     /* Welcome Page Styles */
     .gradient-text {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
 
     .hero-gradient {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
     }
 
     .glass-effect {
@@ -158,12 +170,14 @@
     }
 
     .feature-card {
-        transition: all 0.3s ease;
+        transition: transform 300ms var(--ease-out), box-shadow 300ms var(--ease-out);
     }
 
-    .feature-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    @media (hover: hover) and (pointer: fine) {
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
     }
 
     .animate-float {
@@ -173,5 +187,21 @@
     @keyframes float {
         0%, 100% { transform: translateY(0px); }
         50% { transform: translateY(-20px); }
+    }
+}
+
+/* Reduced motion — keep fades, drop movement and looping */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .animate-float {
+        animation: none !important;
     }
 }
