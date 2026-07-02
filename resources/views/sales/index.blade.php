@@ -16,12 +16,6 @@
             </a>
         </div>
 
-        @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
-                {{ session('success') }}
-            </div>
-        @endif
-
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
             <form method="GET" action="{{ route('sales.index') }}" class="flex flex-wrap gap-4 items-end">

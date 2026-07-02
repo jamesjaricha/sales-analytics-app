@@ -4,9 +4,6 @@
 <div class="min-h-screen bg-gray-50 py-6">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        @if(session('success'))
-            <div class="mb-4 rounded-xl bg-green-50 border border-green-200 text-green-800 px-4 py-3 text-sm">{{ session('success') }}</div>
-        @endif
         @if(session('info'))
             <div class="mb-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 text-sm">{{ session('info') }}</div>
         @endif

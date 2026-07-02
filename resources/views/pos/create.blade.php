@@ -19,10 +19,7 @@
             </div>
         </div>
 
-        <!-- Flash / errors -->
-        @if(session('success'))
-            <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm">{{ session('success') }}</div>
-        @endif
+        <!-- Validation errors -->
         @if($errors->any())
             <div class="mb-4 rounded-xl bg-red-50 border border-red-200 text-red-800 px-4 py-3 text-sm">
                 <ul class="list-disc list-inside space-y-1">
@@ -46,14 +43,17 @@
                             Add product
                         </label>
                         <div class="relative">
-                            <input type="text" x-model="search" x-on:input.debounce.300ms="lookup()" x-on:focus="lookup()"
+                            <input type="text" x-ref="searchInput" x-model="search" x-on:input.debounce.300ms="lookup()" x-on:focus="lookup()"
+                                x-on:keydown.arrow-down.prevent="move(1)" x-on:keydown.arrow-up.prevent="move(-1)"
+                                x-on:keydown.enter.prevent="enterKey()" x-on:keydown.escape="results = []"
                                 placeholder="Search by name or SKU…" autocomplete="off"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                class="w-full px-4 py-2.5 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                             <div x-show="results.length" x-cloak x-on:click.outside="results = []"
                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-auto">
-                                <template x-for="p in results" :key="p.id">
-                                    <button type="button" x-on:click="addProduct(p)"
-                                        class="w-full text-left px-4 py-2.5 hover:bg-emerald-50 flex items-center justify-between gap-3">
+                                <template x-for="(p, idx) in results" :key="p.id">
+                                    <button type="button" x-on:click="addProduct(p)" x-on:mouseenter="highlighted = idx"
+                                        x-bind:class="idx === highlighted ? 'bg-emerald-50' : ''"
+                                        class="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3">
                                         <span class="min-w-0">
                                             <span class="font-medium text-gray-900" x-text="p.name"></span>
                                             <span class="text-xs text-gray-400" x-text="p.sku ? ' · ' + p.sku : ''"></span>
@@ -211,6 +211,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.data('pos', () => ({
         search: '',
         results: [],
+        highlighted: -1,
         items: [],
         submitting: false,
         payment_method: 'cash',
@@ -220,14 +221,28 @@ document.addEventListener('alpine:init', () => {
 
         async lookup() {
             const q = this.search.trim();
-            if (q.length < 1) { this.results = []; return; }
+            if (q.length < 1) { this.results = []; this.highlighted = -1; return; }
             try {
                 const res = await fetch(`{{ route('sales.products.search') }}?q=${encodeURIComponent(q)}`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 });
                 this.results = await res.json();
+                this.highlighted = this.results.length ? 0 : -1;
             } catch (e) {
                 this.results = [];
+                this.highlighted = -1;
+            }
+        },
+
+        move(dir) {
+            if (!this.results.length) return;
+            this.highlighted = (this.highlighted + dir + this.results.length) % this.results.length;
+        },
+
+        // Enter adds the highlighted result — lets a barcode scanner (types SKU + Enter) add instantly
+        enterKey() {
+            if (this.results.length && this.highlighted >= 0) {
+                this.addProduct(this.results[this.highlighted]);
             }
         },
 
@@ -246,6 +261,8 @@ document.addEventListener('alpine:init', () => {
             }
             this.search = '';
             this.results = [];
+            this.highlighted = -1;
+            this.$nextTick(() => this.$refs.searchInput?.focus());
         },
 
         addBlank() {
