@@ -236,6 +236,7 @@
         <thead>
             <tr>
                 <th>Description</th>
+                <th style="width: 120px;">Paid From</th>
                 <th class="text-right" style="width: 150px;">Amount</th>
             </tr>
         </thead>
@@ -243,11 +244,12 @@
             @foreach($report->deductions as $deduction)
             <tr>
                 <td>{{ $deduction->description }}</td>
+                <td>{{ ['cash' => 'Cash', 'bank' => 'Bank', 'mobile_money' => 'Mobile Money'][$deduction->payment_method ?? 'cash'] ?? $deduction->payment_method }}</td>
                 <td class="text-right">ZMW {{ number_format($deduction->amount, 2) }}</td>
             </tr>
             @endforeach
             <tr class="totals-row">
-                <td class="text-right">Total Deductions:</td>
+                <td colspan="2" class="text-right">Total Deductions:</td>
                 <td class="text-right">ZMW {{ number_format($report->total_deductions, 2) }}</td>
             </tr>
         </tbody>
@@ -270,22 +272,32 @@
         </tr>
     </table>
 
+    @php
+        $cashExpenses = (float) $report->deductions->where('payment_method', 'cash')->sum('amount');
+        $bankExpenses = (float) $report->deductions->where('payment_method', 'bank')->sum('amount');
+        $mobileExpenses = (float) $report->deductions->where('payment_method', 'mobile_money')->sum('amount');
+        $netBank = (float) $report->total_bank - $bankExpenses;
+        $netMobile = (float) $report->total_mobile_money - $mobileExpenses;
+        $totalHeld = (float) $report->cash_at_hand + $netBank + $netMobile;
+        $debtRepaid = (float) ($report->debtPayments?->sum('amount') ?? 0);
+    @endphp
+
     @if($report->isApproved())
     <table class="cards">
         <tr>
             <td class="card" style="width: 50%; background-color: #f0fdf4; border: 1px solid #bbf7d0;">
-                <div class="card-label" style="color: #15803d;">Cash</div>
+                <div class="card-label" style="color: #15803d;">Cash Received</div>
                 <div class="card-value" style="color: #166534;">ZMW {{ number_format($report->total_cash, 2) }}</div>
             </td>
             <td class="card" style="width: 50%; background-color: #eff6ff; border: 1px solid #bfdbfe;">
-                <div class="card-label" style="color: #1d4ed8;">Cash @ Bank</div>
-                <div class="card-value" style="color: #1e40af;">ZMW {{ number_format($report->total_bank, 2) }}</div>
+                <div class="card-label" style="color: #1d4ed8;">Cash @ Bank{{ $bankExpenses > 0 ? ' (net of '.number_format($bankExpenses, 2).' exp)' : '' }}</div>
+                <div class="card-value" style="color: #1e40af;">ZMW {{ number_format($netBank, 2) }}</div>
             </td>
         </tr>
         <tr>
             <td class="card" style="width: 50%; background-color: #fffbeb; border: 1px solid #fde68a;">
-                <div class="card-label" style="color: #b45309;">Mobile Money</div>
-                <div class="card-value" style="color: #92400e;">ZMW {{ number_format($report->total_mobile_money, 2) }}</div>
+                <div class="card-label" style="color: #b45309;">Mobile Money{{ $mobileExpenses > 0 ? ' (net of '.number_format($mobileExpenses, 2).' exp)' : '' }}</div>
+                <div class="card-value" style="color: #92400e;">ZMW {{ number_format($netMobile, 2) }}</div>
             </td>
             <td class="card" style="width: 50%; background-color: #fef2f2; border: 1px solid #fecaca;">
                 <div class="card-label" style="color: #b91c1c;">Outstanding Debt</div>
@@ -293,14 +305,34 @@
             </td>
         </tr>
     </table>
+
+    @if($debtRepaid > 0)
+    <p style="font-size: 10px; color: #6b7280; margin: 4px 0 0;">
+        Includes ZMW {{ number_format($debtRepaid, 2) }} in debt repayments received this day (collected against earlier invoices — not part of this day's sales value).
+    </p>
+    @endif
     @endif
 
     <table class="cash-banner">
         <tr>
-            <td style="font-size: 16px; font-weight: bold;">Cash at Hand</td>
+            <td style="font-size: 16px; font-weight: bold;">
+                Cash at Hand (drawer)
+                <div style="font-size: 9px; font-weight: normal; color: #d1fae5;">
+                    B/F {{ number_format((float) ($report->opening_balance ?? 0), 2) }} + cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format($cashExpenses, 2) }}
+                </div>
+            </td>
             <td style="font-size: 22px; font-weight: bold; text-align: right;">ZMW {{ number_format($report->cash_at_hand, 2) }}</td>
         </tr>
     </table>
+
+    @if($report->isApproved())
+    <table style="width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 11px;">
+        <tr>
+            <td style="padding: 4px 8px; color: #6b7280;">Total money held (cash at hand + bank + mobile)</td>
+            <td style="padding: 4px 8px; text-align: right; font-weight: bold; color: #065f46;">ZMW {{ number_format($totalHeld, 2) }}</td>
+        </tr>
+    </table>
+    @endif
 
 
     <!-- Monthly Cumulative Sales - Admin Only -->

@@ -39,35 +39,59 @@
             </div>
 
             <!-- Cash at Hand Card -->
+            @php
+                $cashExpenses = (float) $report->deductions->where('payment_method', 'cash')->sum('amount');
+                $bankExpenses = (float) $report->deductions->where('payment_method', 'bank')->sum('amount');
+                $mobileExpenses = (float) $report->deductions->where('payment_method', 'mobile_money')->sum('amount');
+                $netBank = (float) $report->total_bank - $bankExpenses;
+                $netMobile = (float) $report->total_mobile_money - $mobileExpenses;
+                $totalHeld = (float) $report->cash_at_hand + $netBank + $netMobile;
+            @endphp
             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-6">
-                <p class="text-sm font-medium text-green-700 mb-1">Cash at Hand</p>
-                <h2 class="text-3xl font-bold text-green-900">ZMW {{ number_format($report->cash_at_hand, 2) }}</h2>
-                <p class="text-xs text-green-700 mt-1">Cash {{ number_format($report->total_cash, 2) }} − expenses {{ number_format($report->total_deductions, 2) }}</p>
+                <p class="text-sm font-medium text-green-700 mb-1">Cash at Hand (drawer)</p>
+                <h2 class="text-3xl font-bold text-green-900 tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</h2>
+                <p class="text-xs text-green-700 mt-1 tabular-nums">
+                    B/F {{ number_format((float) ($report->opening_balance ?? 0), 2) }}
+                    + cash {{ number_format($report->total_cash, 2) }}
+                    − cash expenses {{ number_format($cashExpenses, 2) }}
+                </p>
             </div>
         </div>
 
         @if($report->isApproved())
         <!-- Settlement Breakdown (day-end) -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Settlement Breakdown</h2>
+            <h2 class="text-xl font-semibold text-gray-900 mb-1">Settlement Breakdown</h2>
+            <p class="text-sm text-gray-400 mb-4">Each channel is net of the expenses paid through it.</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-green-50 rounded-xl p-4">
-                    <p class="text-xs text-green-700 mb-1">Cash</p>
-                    <p class="text-xl font-bold text-green-700">ZMW {{ number_format($report->total_cash, 2) }}</p>
+                    <p class="text-xs text-green-700 mb-1">Cash Received</p>
+                    <p class="text-xl font-bold text-green-700 tabular-nums">ZMW {{ number_format($report->total_cash, 2) }}</p>
                 </div>
                 <div class="bg-gray-50 rounded-xl p-4">
                     <p class="text-xs text-gray-500 mb-1">Cash @ Bank</p>
-                    <p class="text-xl font-bold text-gray-800">ZMW {{ number_format($report->total_bank, 2) }}</p>
+                    <p class="text-xl font-bold text-gray-800 tabular-nums">ZMW {{ number_format($netBank, 2) }}</p>
+                    @if($bankExpenses > 0)<p class="text-xs text-red-500 tabular-nums">− {{ number_format($bankExpenses, 2) }} exp</p>@endif
                 </div>
                 <div class="bg-gray-50 rounded-xl p-4">
                     <p class="text-xs text-gray-500 mb-1">Mobile Money</p>
-                    <p class="text-xl font-bold text-gray-800">ZMW {{ number_format($report->total_mobile_money, 2) }}</p>
+                    <p class="text-xl font-bold text-gray-800 tabular-nums">ZMW {{ number_format($netMobile, 2) }}</p>
+                    @if($mobileExpenses > 0)<p class="text-xs text-red-500 tabular-nums">− {{ number_format($mobileExpenses, 2) }} exp</p>@endif
                 </div>
                 <div class="bg-amber-50 rounded-xl p-4">
                     <p class="text-xs text-amber-700 mb-1">Outstanding Debt</p>
-                    <p class="text-xl font-bold text-amber-700">ZMW {{ number_format($report->total_outstanding, 2) }}</p>
+                    <p class="text-xl font-bold text-amber-700 tabular-nums">ZMW {{ number_format($report->total_outstanding, 2) }}</p>
                 </div>
             </div>
+            <div class="mt-4 flex items-center justify-between rounded-xl bg-brand-50 border border-brand-200 px-4 py-3">
+                <p class="text-sm font-medium text-brand-800">Total money held (cash at hand + bank + mobile)</p>
+                <p class="text-lg font-bold text-brand-800 tabular-nums">ZMW {{ number_format($totalHeld, 2) }}</p>
+            </div>
+            @if($report->debtPayments->isNotEmpty())
+                <p class="text-xs text-gray-500 mt-2">
+                    Includes ZMW {{ number_format($report->debtPayments->sum('amount'), 2) }} in debt repayments received this day (collected against earlier invoices — not part of this day's sales value).
+                </p>
+            @endif
             @if($report->counted_cash !== null)
                 @php($variance = (float) $report->counted_cash - (float) $report->cash_at_hand)
                 <p class="text-sm text-gray-500 mt-4">
@@ -154,6 +178,7 @@
                     <thead class="bg-gray-50 border-b-2 border-gray-300">
                         <tr>
                             <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700 border-r border-gray-200">Description</th>
+                            <th class="text-center py-3 px-4 text-sm font-semibold text-gray-700 border-r border-gray-200">Paid From</th>
                             <th class="text-center py-3 px-4 text-sm font-semibold text-gray-700">Amount</th>
                         </tr>
                     </thead>
@@ -163,16 +188,19 @@
                             <td class="py-3 px-4 text-sm text-gray-900 border-r border-gray-200">
                                 {{ $deduction->description }}
                             </td>
-                            <td class="py-3 px-4 text-sm font-semibold text-red-600 text-center">
+                            <td class="py-3 px-4 text-sm text-gray-700 text-center border-r border-gray-200">
+                                {{ ['cash' => 'Cash', 'bank' => 'Bank', 'mobile_money' => 'Mobile Money'][$deduction->payment_method ?? 'cash'] ?? $deduction->payment_method }}
+                            </td>
+                            <td class="py-3 px-4 text-sm font-semibold text-red-600 text-center tabular-nums">
                                 ZMW {{ number_format($deduction->amount, 2) }}
                             </td>
                         </tr>
                         @endforeach
                         <tr class="bg-gray-50">
-                            <td class="py-3 px-4 text-sm font-semibold text-gray-900 text-right">
+                            <td colspan="2" class="py-3 px-4 text-sm font-semibold text-gray-900 text-right">
                                 Total Deductions:
                             </td>
-                            <td class="py-3 px-4 text-sm font-bold text-red-600 text-center">
+                            <td class="py-3 px-4 text-sm font-bold text-red-600 text-center tabular-nums">
                                 ZMW {{ number_format($report->total_deductions, 2) }}
                             </td>
                         </tr>

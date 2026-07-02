@@ -233,7 +233,7 @@ class DailySalesController extends Controller
     // Show detailed view of a specific sales report
     public function show($id)
     {
-        $report = DailySalesReport::with(['items', 'deductions', 'user', 'sales.items'])->findOrFail($id);
+        $report = DailySalesReport::with(['items', 'deductions', 'user', 'sales.items', 'debtPayments.sale'])->findOrFail($id);
 
         $lineItems = $this->resolveLineItems($report);
 
@@ -247,7 +247,7 @@ class DailySalesController extends Controller
     // Export sales report to PDF
     public function exportPDF($id)
     {
-        $report = DailySalesReport::with(['items', 'deductions', 'user', 'sales.items'])->findOrFail($id);
+        $report = DailySalesReport::with(['items', 'deductions', 'user', 'sales.items', 'debtPayments.sale'])->findOrFail($id);
 
         $lineItems = $this->resolveLineItems($report);
 

@@ -133,6 +133,16 @@ class DayEndControllerTest extends TestCase
         $response->assertOk();
         $response->assertSee('270.00'); // 300 mobile − 30 mobile expense
         $response->assertSee('820.00'); // 550 cash at hand + 270 mobile + 0 bank
+
+        // The submitter report (sales.show) nets the same way and explains the drawer maths
+        $salesView = $this->actingAs($admin)->get('/sales/'.$report->id);
+        $salesView->assertOk();
+        $salesView->assertSee('270.00');
+        $salesView->assertSee('820.00');
+        $salesView->assertSee('cash expenses');
+
+        // And its PDF renders without error
+        $this->actingAs($admin)->get('/sales/'.$report->id.'/pdf')->assertOk();
     }
 
     public function test_sales_rep_can_run_the_day_end(): void
