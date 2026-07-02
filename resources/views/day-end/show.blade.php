@@ -25,42 +25,60 @@
             </div>
         </div>
 
-        <!-- Settlement breakdown -->
+        @php
+            $cashExpenses = (float) $report->deductions->where('payment_method', 'cash')->sum('amount');
+            $bankExpenses = (float) $report->deductions->where('payment_method', 'bank')->sum('amount');
+            $mobileExpenses = (float) $report->deductions->where('payment_method', 'mobile_money')->sum('amount');
+            $netBank = (float) $report->total_bank - $bankExpenses;
+            $netMobile = (float) $report->total_mobile_money - $mobileExpenses;
+            $totalHeld = (float) $report->cash_at_hand + $netBank + $netMobile;
+        @endphp
+
+        <!-- Settlement breakdown — each channel net of the expenses paid through it -->
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
             <div class="bg-white rounded-xl border border-gray-200 p-4">
                 <p class="text-xs text-gray-500">Gross sales</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($report->total_sales_value, 2) }}</p>
+                <p class="text-lg font-bold text-gray-900 tabular-nums">{{ number_format($report->total_sales_value, 2) }}</p>
             </div>
             <div class="bg-white rounded-xl border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Cash</p>
-                <p class="text-lg font-bold text-green-700">{{ number_format($report->total_cash, 2) }}</p>
+                <p class="text-xs text-gray-500">Cash received</p>
+                <p class="text-lg font-bold text-green-700 tabular-nums">{{ number_format($report->total_cash, 2) }}</p>
             </div>
             <div class="bg-white rounded-xl border border-gray-200 p-4">
                 <p class="text-xs text-gray-500">Bank</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($report->total_bank, 2) }}</p>
+                <p class="text-lg font-bold text-gray-900 tabular-nums">{{ number_format($netBank, 2) }}</p>
+                @if($bankExpenses > 0)<p class="text-xs text-red-500 tabular-nums">− {{ number_format($bankExpenses, 2) }} exp</p>@endif
             </div>
             <div class="bg-white rounded-xl border border-gray-200 p-4">
                 <p class="text-xs text-gray-500">Mobile money</p>
-                <p class="text-lg font-bold text-gray-900">{{ number_format($report->total_mobile_money, 2) }}</p>
+                <p class="text-lg font-bold text-gray-900 tabular-nums">{{ number_format($netMobile, 2) }}</p>
+                @if($mobileExpenses > 0)<p class="text-xs text-red-500 tabular-nums">− {{ number_format($mobileExpenses, 2) }} exp</p>@endif
             </div>
             <div class="bg-white rounded-xl border border-gray-200 p-4">
                 <p class="text-xs text-gray-500">Outstanding</p>
-                <p class="text-lg font-bold text-amber-600">{{ number_format($report->total_outstanding, 2) }}</p>
+                <p class="text-lg font-bold text-amber-600 tabular-nums">{{ number_format($report->total_outstanding, 2) }}</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="space-y-6">
                 <!-- Cash at hand -->
-                @php($cashExpenses = $report->deductions->where('payment_method', 'cash')->sum('amount'))
                 <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-5 text-center">
-                    <p class="text-sm text-green-700">Cash at hand</p>
+                    <p class="text-sm text-green-700">Cash at hand (drawer)</p>
                     <p class="text-4xl font-bold text-green-900 mt-1 tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</p>
                     <p class="text-xs text-green-700 mt-1 tabular-nums">
                         B/F {{ number_format((float) ($report->opening_balance ?? 0), 2) }}
                         + cash {{ number_format($report->total_cash, 2) }}
-                        − cash expenses {{ number_format((float) $cashExpenses, 2) }}
+                        − cash expenses {{ number_format($cashExpenses, 2) }}
                     </p>
+                </div>
+
+                <!-- Total money held across all channels -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 text-sm space-y-1">
+                    <div class="flex justify-between"><span class="text-gray-500">Cash at hand (drawer)</span><span class="font-medium tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Bank</span><span class="font-medium tabular-nums">ZMW {{ number_format($netBank, 2) }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Mobile money</span><span class="font-medium tabular-nums">ZMW {{ number_format($netMobile, 2) }}</span></div>
+                    <div class="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900"><span>Total money held</span><span class="tabular-nums">ZMW {{ number_format($totalHeld, 2) }}</span></div>
                 </div>
 
                 @if($report->counted_cash !== null)

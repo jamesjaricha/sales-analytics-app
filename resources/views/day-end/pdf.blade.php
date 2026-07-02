@@ -27,27 +27,36 @@
         @if($report->isApproved()) &middot; Approved{{ $report->approvedBy ? ' by '.$report->approvedBy->name : '' }} {{ $report->approved_at->format('d M Y H:i') }} @endif
     </p>
 
+    @php
+        $pdfCashExpenses = (float) $report->deductions->where('payment_method', 'cash')->sum('amount');
+        $pdfBankExpenses = (float) $report->deductions->where('payment_method', 'bank')->sum('amount');
+        $pdfMobileExpenses = (float) $report->deductions->where('payment_method', 'mobile_money')->sum('amount');
+        $pdfNetBank = (float) $report->total_bank - $pdfBankExpenses;
+        $pdfNetMobile = (float) $report->total_mobile_money - $pdfMobileExpenses;
+        $pdfTotalHeld = (float) $report->cash_at_hand + $pdfNetBank + $pdfNetMobile;
+    @endphp
+
     <table class="row breakdown" style="margin-top: 12px;">
         <tr>
             <td><div class="label">Gross sales</div><div class="val">ZMW {{ number_format($report->total_sales_value, 2) }}</div></td>
-            <td><div class="label">Cash</div><div class="val">ZMW {{ number_format($report->total_cash, 2) }}</div></td>
-            <td><div class="label">Cash @ Bank</div><div class="val">ZMW {{ number_format($report->total_bank, 2) }}</div></td>
+            <td><div class="label">Cash received</div><div class="val">ZMW {{ number_format($report->total_cash, 2) }}</div></td>
+            <td><div class="label">Cash @ Bank{{ $pdfBankExpenses > 0 ? ' (net)' : '' }}</div><div class="val">ZMW {{ number_format($pdfNetBank, 2) }}</div></td>
         </tr>
         <tr>
-            <td><div class="label">Mobile money</div><div class="val">ZMW {{ number_format($report->total_mobile_money, 2) }}</div></td>
+            <td><div class="label">Mobile money{{ $pdfMobileExpenses > 0 ? ' (net)' : '' }}</div><div class="val">ZMW {{ number_format($pdfNetMobile, 2) }}</div></td>
             <td><div class="label">Outstanding debt</div><div class="val">ZMW {{ number_format($report->total_outstanding, 2) }}</div></td>
             <td><div class="label">Total expenses</div><div class="val">ZMW {{ number_format($report->total_deductions, 2) }}</div></td>
         </tr>
     </table>
 
-    @php($pdfCashExpenses = $report->deductions->where('payment_method', 'cash')->sum('amount'))
     <div class="cash-box">
-        <div class="muted">Cash at hand (b/f {{ number_format((float) ($report->opening_balance ?? 0), 2) }} + cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format((float) $pdfCashExpenses, 2) }})</div>
+        <div class="muted">Cash at hand (b/f {{ number_format((float) ($report->opening_balance ?? 0), 2) }} + cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format($pdfCashExpenses, 2) }})</div>
         <div class="amt">ZMW {{ number_format($report->cash_at_hand, 2) }}</div>
         @if($report->counted_cash !== null)
             @php($variance = (float) $report->counted_cash - (float) $report->cash_at_hand)
             <div class="muted">Counted {{ number_format($report->counted_cash, 2) }} &middot; Variance {{ $variance > 0 ? '+' : '' }}{{ number_format($variance, 2) }}</div>
         @endif
+        <div class="muted" style="margin-top: 6px;">Total money held (cash + bank + mobile): <strong>ZMW {{ number_format($pdfTotalHeld, 2) }}</strong></div>
     </div>
 
     @if($report->debtPayments->count())

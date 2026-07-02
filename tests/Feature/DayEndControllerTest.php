@@ -101,6 +101,40 @@ class DayEndControllerTest extends TestCase
         ]);
     }
 
+    public function test_report_nets_bank_and_mobile_expenses_and_reconciles_total_held(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->saleToday('cash', 400);
+        $this->saleToday('mobile_money', 300);
+
+        DayOpening::create([
+            'business_date' => now()->toDateString(),
+            'opening_balance' => 200,
+            'opened_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->post('/day-end', [
+            'expenses' => [
+                ['description' => 'Fuel', 'amount' => 50, 'payment_method' => 'cash'],
+                ['description' => 'Airtime', 'amount' => 30, 'payment_method' => 'mobile_money'],
+            ],
+            'counted_cash' => 550,
+        ]);
+
+        $report = DailySalesReport::whereNotNull('approved_at')->first();
+
+        // Cash at hand unaffected by the mobile expense: 200 b/f + 400 − 50
+        $this->assertEqualsWithDelta(550, $report->cash_at_hand, 0.001);
+        // Stored channel columns remain gross
+        $this->assertEqualsWithDelta(300, $report->total_mobile_money, 0.001);
+
+        // Report page shows the netted mobile (270) and reconciled total held (820)
+        $response = $this->actingAs($admin)->get(route('day-end.show', $report));
+        $response->assertOk();
+        $response->assertSee('270.00'); // 300 mobile − 30 mobile expense
+        $response->assertSee('820.00'); // 550 cash at hand + 270 mobile + 0 bank
+    }
+
     public function test_sales_rep_can_run_the_day_end(): void
     {
         $rep = User::factory()->create(['role' => 'sales_rep']);

@@ -195,20 +195,34 @@
                 <!-- STEP 4 — Confirm -->
                 <div x-show="step === 4" class="space-y-4">
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2 text-sm">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-2">Confirm & approve</h2>
-                        <div class="flex justify-between"><span class="text-gray-500">Gross sales</span><span class="font-medium">ZMW {{ number_format($summary['gross_sales'], 2) }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Cash</span><span class="font-medium">ZMW {{ number_format($summary['total_cash'], 2) }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Cash @ Bank</span><span class="font-medium">ZMW {{ number_format($summary['total_bank'], 2) }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Mobile money</span><span class="font-medium">ZMW {{ number_format($summary['total_mobile_money'], 2) }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Outstanding debt</span><span class="font-medium text-amber-600">ZMW {{ number_format($summary['total_outstanding'], 2) }}</span></div>
+                        <h2 class="text-lg font-semibold text-gray-900 mb-1">Money held (after expenses)</h2>
+                        <p class="text-xs text-gray-400 mb-2">Each channel is net of the expenses paid through it.</p>
+                        <div class="flex justify-between"><span class="text-gray-500">Cash at hand (drawer)</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(expectedCash)"></span></span></div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Cash @ Bank <template x-if="bankExpensesTotal > 0"><span class="text-xs text-red-500">(− <span x-text="fmt(bankExpensesTotal)"></span> exp)</span></template></span>
+                            <span class="font-medium tabular-nums">ZMW <span x-text="fmt(netBank)"></span></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Mobile money <template x-if="mobileExpensesTotal > 0"><span class="text-xs text-red-500">(− <span x-text="fmt(mobileExpensesTotal)"></span> exp)</span></template></span>
+                            <span class="font-medium tabular-nums">ZMW <span x-text="fmt(netMobile)"></span></span>
+                        </div>
+                        <div class="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900">
+                            <span>Total money held</span><span class="tabular-nums">ZMW <span x-text="fmt(totalHeld)"></span></span>
+                        </div>
+                        <div class="flex justify-between pt-1"><span class="text-gray-500">Outstanding debt (owed to you)</span><span class="font-medium text-amber-600 tabular-nums">ZMW {{ number_format($summary['total_outstanding'], 2) }}</span></div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2 text-sm">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">How the drawer adds up</p>
                         <div class="flex justify-between"><span class="text-gray-500">Balance b/f</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(openingBalanceNum)"></span></span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Cash expenses</span><span class="font-medium text-red-600 tabular-nums">− ZMW <span x-text="fmt(cashExpensesTotal)"></span></span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">All expenses (cash + bank + mobile)</span><span class="font-medium text-red-600 tabular-nums">ZMW <span x-text="fmt(expensesTotal)"></span></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">+ Cash takings</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(totalCash)"></span></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">− Cash expenses</span><span class="font-medium text-red-600 tabular-nums">ZMW <span x-text="fmt(cashExpensesTotal)"></span></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Gross sales invoiced</span><span class="font-medium tabular-nums">ZMW {{ number_format($summary['gross_sales'], 2) }}</span></div>
                     </div>
 
                     <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-5 text-center">
-                        <p class="text-sm text-green-700">Cash at hand</p>
-                        <p class="text-4xl font-bold text-green-900 mt-1">ZMW <span x-text="fmt(expectedCash)"></span></p>
+                        <p class="text-sm text-green-700">Cash at hand (drawer)</p>
+                        <p class="text-4xl font-bold text-green-900 mt-1 tabular-nums">ZMW <span x-text="fmt(expectedCash)"></span></p>
                     </div>
 
                     <p class="text-xs text-gray-400 text-center">Approving locks today's {{ $summary['invoice_count'] }} invoice{{ $summary['invoice_count'] === 1 ? '' : 's' }} — they can no longer be edited or voided.</p>
@@ -246,6 +260,8 @@ document.addEventListener('alpine:init', () => {
         counted_cash: '',
         opening_balance: @json($summary['opening_balance'] ?? 0),
         totalCash: @json($summary['total_cash'] ?? 0),
+        totalBank: @json($summary['total_bank'] ?? 0),
+        totalMobile: @json($summary['total_mobile_money'] ?? 0),
 
         addExpense() { this.expenses.push({ description: '', amount: '', payment_method: 'cash' }); },
         removeExpense(i) { this.expenses.splice(i, 1); },
@@ -255,16 +271,34 @@ document.addEventListener('alpine:init', () => {
         get expensesTotal() {
             return this.expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
         },
-        get cashExpensesTotal() {
+        channelExpenses(method) {
             return this.expenses
-                .filter(e => (e.payment_method || 'cash') === 'cash')
+                .filter(e => (e.payment_method || 'cash') === method)
                 .reduce((s, e) => s + (Number(e.amount) || 0), 0);
+        },
+        get cashExpensesTotal() {
+            return this.channelExpenses('cash');
+        },
+        get bankExpensesTotal() {
+            return this.channelExpenses('bank');
+        },
+        get mobileExpensesTotal() {
+            return this.channelExpenses('mobile_money');
+        },
+        get netBank() {
+            return this.totalBank - this.bankExpensesTotal;
+        },
+        get netMobile() {
+            return this.totalMobile - this.mobileExpensesTotal;
         },
         get openingBalanceNum() {
             return Number(this.opening_balance) || 0;
         },
         get expectedCash() {
             return this.openingBalanceNum + this.totalCash - this.cashExpensesTotal;
+        },
+        get totalHeld() {
+            return this.expectedCash + this.netBank + this.netMobile;
         },
         get variance() {
             return this.counted_cash === '' || this.counted_cash === null ? null : (Number(this.counted_cash) - this.expectedCash);
