@@ -49,14 +49,16 @@
         </tr>
     </table>
 
+    @php($pdfExpectedDrawer = (float) ($report->opening_balance ?? 0) + (float) $report->cash_at_hand)
     <div class="cash-box">
-        <div class="muted">Cash at hand (b/f {{ number_format((float) ($report->opening_balance ?? 0), 2) }} + cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format($pdfCashExpenses, 2) }})</div>
+        <div class="muted">Cash at hand — today's takings (cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format($pdfCashExpenses, 2) }})</div>
         <div class="amt">ZMW {{ number_format($report->cash_at_hand, 2) }}</div>
+        <div class="muted">Balance b/f (float): {{ number_format((float) ($report->opening_balance ?? 0), 2) }} &middot; Expected in drawer (b/f + takings): <strong>{{ number_format($pdfExpectedDrawer, 2) }}</strong></div>
         @if($report->counted_cash !== null)
-            @php($variance = (float) $report->counted_cash - (float) $report->cash_at_hand)
+            @php($variance = (float) $report->counted_cash - $pdfExpectedDrawer)
             <div class="muted">Counted {{ number_format($report->counted_cash, 2) }} &middot; Variance {{ $variance > 0 ? '+' : '' }}{{ number_format($variance, 2) }}</div>
         @endif
-        <div class="muted" style="margin-top: 6px;">Total money held (cash + bank + mobile): <strong>ZMW {{ number_format($pdfTotalHeld, 2) }}</strong></div>
+        <div class="muted" style="margin-top: 6px;">Total money held (cash at hand + bank + mobile): <strong>ZMW {{ number_format($pdfTotalHeld, 2) }}</strong></div>
     </div>
 
     @if($report->debtPayments->count())

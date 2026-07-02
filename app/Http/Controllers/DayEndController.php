@@ -54,6 +54,20 @@ class DayEndController extends Controller
     }
 
     /**
+     * Reopen today's approved day-end (admin only) so inputs can be corrected
+     * and the day re-approved with recomputed figures.
+     */
+    public function reopen(DailySalesReport $dayEnd)
+    {
+        $this->dayEnd->reopen($dayEnd, Auth::user());
+
+        return redirect()->route('day-end.create')->with(
+            'success',
+            'Day-end reopened — correct the inputs (balance b/f, invoices, expenses) and approve again.',
+        );
+    }
+
+    /**
      * View an approved day-end report.
      */
     public function show(DailySalesReport $dayEnd)

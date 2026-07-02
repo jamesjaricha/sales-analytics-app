@@ -316,9 +316,9 @@
     <table class="cash-banner">
         <tr>
             <td style="font-size: 16px; font-weight: bold;">
-                Cash at Hand (drawer)
+                Cash at Hand (today's takings)
                 <div style="font-size: 9px; font-weight: normal; color: #d1fae5;">
-                    B/F {{ number_format((float) ($report->opening_balance ?? 0), 2) }} + cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format($cashExpenses, 2) }}
+                    Cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format($cashExpenses, 2) }} &middot; B/F float {{ number_format((float) ($report->opening_balance ?? 0), 2) }} kept separate
                 </div>
             </td>
             <td style="font-size: 22px; font-weight: bold; text-align: right;">ZMW {{ number_format($report->cash_at_hand, 2) }}</td>

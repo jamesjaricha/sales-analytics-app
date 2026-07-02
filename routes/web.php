@@ -104,6 +104,9 @@ Route::middleware(['auth', 'role:admin', 'throttle:300,1'])->group(function () {
 
     // Stock Adjustments - Admin only
     Route::post('/stock/adjust', [StockController::class, 'store'])->name('stock.store')->middleware('throttle:20,1');
+
+    // Reopen today's day-end for correction - Admin only
+    Route::post('/day-end/{dayEnd}/reopen', [DayEndController::class, 'reopen'])->name('day-end.reopen')->whereNumber('dayEnd')->middleware('throttle:10,1');
 });
 
 // Admin-only User Management

@@ -67,8 +67,8 @@ class DayOpeningTest extends TestCase
 
         $report = \App\Models\DailySalesReport::whereNotNull('approved_at')->first();
         $this->assertNotNull($report);
-        $this->assertEqualsWithDelta(300, $report->opening_balance, 0.001);
-        $this->assertEqualsWithDelta(700, $report->cash_at_hand, 0.001); // 300 b/f + 400 cash
+        $this->assertEqualsWithDelta(300, $report->opening_balance, 0.001); // stored as its own summary figure
+        $this->assertEqualsWithDelta(400, $report->cash_at_hand, 0.001); // takings only — b/f NOT included
     }
 
     public function test_opening_balance_is_required_and_numeric(): void

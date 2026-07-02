@@ -48,12 +48,14 @@
                 $totalHeld = (float) $report->cash_at_hand + $netBank + $netMobile;
             @endphp
             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-6">
-                <p class="text-sm font-medium text-green-700 mb-1">Cash at Hand (drawer)</p>
+                <p class="text-sm font-medium text-green-700 mb-1">Cash at Hand (today's takings)</p>
                 <h2 class="text-3xl font-bold text-green-900 tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</h2>
                 <p class="text-xs text-green-700 mt-1 tabular-nums">
-                    B/F {{ number_format((float) ($report->opening_balance ?? 0), 2) }}
-                    + cash {{ number_format($report->total_cash, 2) }}
+                    Cash {{ number_format($report->total_cash, 2) }}
                     − cash expenses {{ number_format($cashExpenses, 2) }}
+                    @if((float) ($report->opening_balance ?? 0) > 0)
+                        · B/F float {{ number_format((float) $report->opening_balance, 2) }} kept separate
+                    @endif
                 </p>
             </div>
         </div>
@@ -93,9 +95,11 @@
                 </p>
             @endif
             @if($report->counted_cash !== null)
-                @php($variance = (float) $report->counted_cash - (float) $report->cash_at_hand)
-                <p class="text-sm text-gray-500 mt-4">
+                @php($expectedDrawer = (float) ($report->opening_balance ?? 0) + (float) $report->cash_at_hand)
+                @php($variance = (float) $report->counted_cash - $expectedDrawer)
+                <p class="text-sm text-gray-500 mt-4 tabular-nums">
                     Counted cash: <span class="font-semibold text-gray-800">ZMW {{ number_format($report->counted_cash, 2) }}</span>
+                    · Expected in drawer (b/f + takings): <span class="font-semibold text-gray-800">ZMW {{ number_format($expectedDrawer, 2) }}</span>
                     · Variance: <span class="font-semibold {{ $variance == 0 ? 'text-gray-700' : ($variance > 0 ? 'text-green-600' : 'text-red-600') }}">{{ $variance > 0 ? '+' : '' }}ZMW {{ number_format($variance, 2) }}</span>
                 </p>
             @endif

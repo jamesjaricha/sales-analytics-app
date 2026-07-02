@@ -20,8 +20,15 @@
                 </p>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('day-end.pdf', $report) }}" class="text-sm font-medium text-blue-600 hover:text-blue-700">Download PDF</a>
+                <a href="{{ route('day-end.pdf', $report) }}" class="text-sm font-medium text-brand-600 hover:text-brand-700">Download PDF</a>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Locked</span>
+                @if(auth()->user()->role === 'admin' && $report->isApproved() && $report->sale_date->isToday())
+                    <form method="POST" action="{{ route('day-end.reopen', $report) }}"
+                        onsubmit="return confirm('Reopen today\'s day-end? The report will be removed and its invoices unlocked — you must correct the inputs and approve the day again.');">
+                        @csrf
+                        <button type="submit" class="text-sm font-medium text-accent-600 hover:text-accent-700">Reopen day</button>
+                    </form>
+                @endif
             </div>
         </div>
 
@@ -63,32 +70,33 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="space-y-6">
                 <!-- Cash at hand -->
+                @php($expectedDrawer = (float) ($report->opening_balance ?? 0) + (float) $report->cash_at_hand)
                 <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-5 text-center">
-                    <p class="text-sm text-green-700">Cash at hand (drawer)</p>
+                    <p class="text-sm text-green-700">Cash at hand (today's takings)</p>
                     <p class="text-4xl font-bold text-green-900 mt-1 tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</p>
                     <p class="text-xs text-green-700 mt-1 tabular-nums">
-                        B/F {{ number_format((float) ($report->opening_balance ?? 0), 2) }}
-                        + cash {{ number_format($report->total_cash, 2) }}
+                        Cash {{ number_format($report->total_cash, 2) }}
                         − cash expenses {{ number_format($cashExpenses, 2) }}
                     </p>
                 </div>
 
                 <!-- Total money held across all channels -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 text-sm space-y-1">
-                    <div class="flex justify-between"><span class="text-gray-500">Cash at hand (drawer)</span><span class="font-medium tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">Cash at hand (takings)</span><span class="font-medium tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">Bank</span><span class="font-medium tabular-nums">ZMW {{ number_format($netBank, 2) }}</span></div>
                     <div class="flex justify-between"><span class="text-gray-500">Mobile money</span><span class="font-medium tabular-nums">ZMW {{ number_format($netMobile, 2) }}</span></div>
                     <div class="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900"><span>Total money held</span><span class="tabular-nums">ZMW {{ number_format($totalHeld, 2) }}</span></div>
+                    <div class="flex justify-between pt-1"><span class="text-gray-500">Balance b/f (float)</span><span class="font-medium tabular-nums">ZMW {{ number_format((float) ($report->opening_balance ?? 0), 2) }}</span></div>
                 </div>
 
                 @if($report->counted_cash !== null)
-                    @php($variance = (float) $report->counted_cash - (float) $report->cash_at_hand)
+                    @php($variance = (float) $report->counted_cash - $expectedDrawer)
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 text-sm space-y-1">
-                        <div class="flex justify-between"><span class="text-gray-500">Counted cash</span><span class="font-medium">ZMW {{ number_format($report->counted_cash, 2) }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Expected (cash at hand)</span><span class="font-medium">ZMW {{ number_format($report->cash_at_hand, 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Counted cash</span><span class="font-medium tabular-nums">ZMW {{ number_format($report->counted_cash, 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Expected in drawer (b/f + takings)</span><span class="font-medium tabular-nums">ZMW {{ number_format($expectedDrawer, 2) }}</span></div>
                         <div class="flex justify-between border-t border-gray-200 pt-1">
                             <span class="text-gray-700 font-medium">Variance</span>
-                            <span class="font-semibold {{ $variance == 0 ? 'text-gray-700' : ($variance > 0 ? 'text-green-600' : 'text-red-600') }}">
+                            <span class="font-semibold tabular-nums {{ $variance == 0 ? 'text-gray-700' : ($variance > 0 ? 'text-green-600' : 'text-red-600') }}">
                                 {{ $variance > 0 ? '+' : '' }}ZMW {{ number_format($variance, 2) }}
                             </span>
                         </div>

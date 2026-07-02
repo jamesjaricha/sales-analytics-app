@@ -83,9 +83,10 @@ class DayEndService
      * Approve and lock the day-end: persist the reconciliation, record expenses
      * (cash, bank or mobile money), and attach the day's invoices to the report.
      *
-     * Drawer maths: cash at hand = balance b/f + cash takings − cash expenses.
-     * Bank/mobile expenses never touch the drawer. The balance b/f is read
-     * from the day opening captured at sign-in.
+     * Money maths: cash at hand = cash takings − cash expenses (the balance
+     * b/f is reported as its own summary line, NOT inside cash at hand).
+     * The physical drawer count is checked against b/f + cash at hand.
+     * Bank/mobile expenses never touch the drawer.
      *
      * @param  array<int, array{description?: string|null, amount?: float|int|string|null, payment_method?: string|null}>  $expenses
      */
@@ -122,8 +123,9 @@ class DayEndService
             }
 
             // Only cash expenses leave the drawer; bank/mobile expenses come out
-            // of their own settlement lines.
-            $cashAtHand = ($openingBalance ?? 0.0) + $summary['total_cash'] - $cashExpenses;
+            // of their own settlement lines. Balance b/f is NOT included here —
+            // it is stored separately and only affects the drawer-count check.
+            $cashAtHand = $summary['total_cash'] - $cashExpenses;
 
             $report = DailySalesReport::create([
                 'user_id' => $admin->id,
@@ -161,5 +163,43 @@ class DayEndService
 
             return $report;
         });
+    }
+
+    /**
+     * Reopen TODAY's approved day-end so its inputs can be corrected and the
+     * day re-approved. Unlocks the invoices and repayments and removes the
+     * report — every figure is recomputed from the corrected inputs on
+     * re-approval, so the report can never disagree with its own contents.
+     */
+    public function reopen(DailySalesReport $report, User $admin): void
+    {
+        if (! $report->isApproved()) {
+            throw ValidationException::withMessages([
+                'report' => 'Only an approved day-end can be reopened.',
+            ]);
+        }
+
+        if (! $report->sale_date->isToday()) {
+            throw ValidationException::withMessages([
+                'report' => 'Only today\'s day-end can be reopened — older days are permanently locked.',
+            ]);
+        }
+
+        DB::transaction(function () use ($report) {
+            Sale::where('day_end_report_id', $report->id)
+                ->update(['day_end_report_id' => null]);
+
+            DebtPayment::where('day_end_report_id', $report->id)
+                ->update(['day_end_report_id' => null]);
+
+            $report->deductions()->delete();
+            $report->delete();
+        });
+
+        logger()->info('Day-end reopened', [
+            'report_id' => $report->id,
+            'sale_date' => $report->sale_date->toDateString(),
+            'reopened_by' => $admin->id,
+        ]);
     }
 }

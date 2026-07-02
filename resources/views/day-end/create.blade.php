@@ -175,10 +175,11 @@
                                 </div>
                             </div>
                             <div class="bg-gray-50 rounded-xl p-4 text-sm space-y-1">
-                                <div class="flex justify-between"><span class="text-gray-500">Balance b/f</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(openingBalanceNum)"></span></span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Cash sales</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(totalCash)"></span></span></div>
                                 <div class="flex justify-between"><span class="text-gray-500">Less cash expenses</span><span class="font-medium text-red-600 tabular-nums">− ZMW <span x-text="fmt(cashExpensesTotal)"></span></span></div>
-                                <div class="flex justify-between border-t border-gray-200 pt-1"><span class="text-gray-700 font-medium">Expected in drawer</span><span class="font-semibold tabular-nums">ZMW <span x-text="fmt(expectedCash)"></span></span></div>
+                                <div class="flex justify-between border-t border-gray-200 pt-1"><span class="text-gray-700 font-medium">Cash at hand (takings)</span><span class="font-semibold tabular-nums">ZMW <span x-text="fmt(cashAtHand)"></span></span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Balance b/f (float)</span><span class="font-medium tabular-nums">+ ZMW <span x-text="fmt(openingBalanceNum)"></span></span></div>
+                                <div class="flex justify-between border-t border-gray-200 pt-1"><span class="text-gray-700 font-medium">Expected in drawer</span><span class="font-semibold tabular-nums">ZMW <span x-text="fmt(expectedDrawer)"></span></span></div>
                                 <template x-if="variance !== null">
                                     <div class="flex justify-between pt-1">
                                         <span class="text-gray-700 font-medium">Variance</span>
@@ -197,7 +198,7 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2 text-sm">
                         <h2 class="text-lg font-semibold text-gray-900 mb-1">Money held (after expenses)</h2>
                         <p class="text-xs text-gray-400 mb-2">Each channel is net of the expenses paid through it.</p>
-                        <div class="flex justify-between"><span class="text-gray-500">Cash at hand (drawer)</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(expectedCash)"></span></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Cash at hand (takings)</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(cashAtHand)"></span></span></div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Cash @ Bank <template x-if="bankExpensesTotal > 0"><span class="text-xs text-red-500">(− <span x-text="fmt(bankExpensesTotal)"></span> exp)</span></template></span>
                             <span class="font-medium tabular-nums">ZMW <span x-text="fmt(netBank)"></span></span>
@@ -213,16 +214,16 @@
                     </div>
 
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2 text-sm">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">How the drawer adds up</p>
-                        <div class="flex justify-between"><span class="text-gray-500">Balance b/f</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(openingBalanceNum)"></span></span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">+ Cash takings</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(totalCash)"></span></span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">− Cash expenses</span><span class="font-medium text-red-600 tabular-nums">ZMW <span x-text="fmt(cashExpensesTotal)"></span></span></div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Summary</p>
                         <div class="flex justify-between"><span class="text-gray-500">Gross sales invoiced</span><span class="font-medium tabular-nums">ZMW {{ number_format($summary['gross_sales'], 2) }}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Balance b/f (float, not in cash at hand)</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(openingBalanceNum)"></span></span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Expected in drawer (b/f + cash at hand)</span><span class="font-medium tabular-nums">ZMW <span x-text="fmt(expectedDrawer)"></span></span></div>
                     </div>
 
                     <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-5 text-center">
-                        <p class="text-sm text-green-700">Cash at hand (drawer)</p>
-                        <p class="text-4xl font-bold text-green-900 mt-1 tabular-nums">ZMW <span x-text="fmt(expectedCash)"></span></p>
+                        <p class="text-sm text-green-700">Cash at hand (today's takings)</p>
+                        <p class="text-4xl font-bold text-green-900 mt-1 tabular-nums">ZMW <span x-text="fmt(cashAtHand)"></span></p>
+                        <p class="text-xs text-green-700 mt-1 tabular-nums">Cash <span x-text="fmt(totalCash)"></span> − cash expenses <span x-text="fmt(cashExpensesTotal)"></span></p>
                     </div>
 
                     <p class="text-xs text-gray-400 text-center">Approving locks today's {{ $summary['invoice_count'] }} invoice{{ $summary['invoice_count'] === 1 ? '' : 's' }} — they can no longer be edited or voided.</p>
@@ -294,14 +295,19 @@ document.addEventListener('alpine:init', () => {
         get openingBalanceNum() {
             return Number(this.opening_balance) || 0;
         },
-        get expectedCash() {
-            return this.openingBalanceNum + this.totalCash - this.cashExpensesTotal;
+        // Today's cash takings after cash expenses — b/f NOT included
+        get cashAtHand() {
+            return this.totalCash - this.cashExpensesTotal;
+        },
+        // What should physically be in the drawer when counted
+        get expectedDrawer() {
+            return this.openingBalanceNum + this.cashAtHand;
         },
         get totalHeld() {
-            return this.expectedCash + this.netBank + this.netMobile;
+            return this.cashAtHand + this.netBank + this.netMobile;
         },
         get variance() {
-            return this.counted_cash === '' || this.counted_cash === null ? null : (Number(this.counted_cash) - this.expectedCash);
+            return this.counted_cash === '' || this.counted_cash === null ? null : (Number(this.counted_cash) - this.expectedDrawer);
         },
         fmt(n) {
             return Number(n || 0).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
