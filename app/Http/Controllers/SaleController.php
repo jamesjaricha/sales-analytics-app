@@ -42,6 +42,8 @@ class SaleController extends Controller
             'business_date' => ['nullable', 'date'],
             'payment_method' => ['required', new Enum(PaymentMethod::class)],
             'customer_name' => ['nullable', 'required_if:payment_method,'.PaymentMethod::Credit->value, 'string', 'max:255'],
+            'paid_amount' => ['nullable', 'numeric', 'min:0'],
+            'paid_via' => ['nullable', 'in:cash,bank,mobile_money'],
             'note' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['nullable', 'integer', 'exists:products,id'],

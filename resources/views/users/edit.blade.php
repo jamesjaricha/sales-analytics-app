@@ -107,6 +107,41 @@
                     </div>
                 </div>
 
+                <!-- Till PIN -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">Till PIN (sales reps only)</h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        {{ $user->pin ? 'A PIN is set — enter a new one to replace it, or tick remove.' : 'No PIN set — this rep cannot use the PIN sign-in yet.' }}
+                    </p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="pin" class="block text-sm font-medium text-gray-700 mb-2">
+                                New PIN
+                            </label>
+                            <input type="password"
+                                name="pin"
+                                id="pin"
+                                inputmode="numeric"
+                                pattern="[0-9]*"
+                                maxlength="6"
+                                autocomplete="off"
+                                placeholder="4–6 digits"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors">
+                            @error('pin')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        @if($user->pin)
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="clear_pin" value="1" class="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500">
+                                Remove this user's PIN (they will no longer appear on the till sign-in screen)
+                            </label>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Submit Buttons -->
                 <div class="flex justify-end space-x-4 pt-6">
                     <a href="{{ route('users.index') }}"

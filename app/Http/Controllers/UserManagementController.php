@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
 
 class UserManagementController extends Controller
@@ -22,11 +22,13 @@ class UserManagementController extends Controller
     {
         try {
             $users = User::orderBy('name')->paginate(15);
+
             return view('users.index', compact('users'));
         } catch (\Exception $e) {
             Log::error('Users Index Error', [
                 'message' => $e->getMessage(),
             ]);
+
             return redirect()->back()->with('error', 'Unable to load users. Please try again.');
         }
     }
@@ -50,6 +52,7 @@ class UserManagementController extends Controller
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
                 'password' => ['required', 'confirmed', Password::defaults()],
                 'role' => ['required', 'string', 'in:admin,sales_rep'],
+                'pin' => ['nullable', 'digits_between:4,6'],
             ]);
 
             DB::beginTransaction();
@@ -59,6 +62,7 @@ class UserManagementController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role' => $validated['role'],
+                'pin' => ! empty($validated['pin']) ? Hash::make($validated['pin']) : null,
             ]);
 
             DB::commit();
@@ -72,6 +76,7 @@ class UserManagementController extends Controller
             Log::error('User Store Error', [
                 'message' => $e->getMessage(),
             ]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to create user. Please try again.');
@@ -94,9 +99,11 @@ class UserManagementController extends Controller
         try {
             $validated = $request->validate([
                 'name' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
                 'role' => ['required', 'string', 'in:admin,sales_rep'],
                 'password' => ['nullable', 'confirmed', Password::defaults()],
+                'pin' => ['nullable', 'digits_between:4,6'],
+                'clear_pin' => ['nullable', 'boolean'],
             ]);
 
             DB::beginTransaction();
@@ -108,8 +115,15 @@ class UserManagementController extends Controller
             ];
 
             // Only update password if provided
-            if (!empty($validated['password'])) {
+            if (! empty($validated['password'])) {
                 $updateData['password'] = Hash::make($validated['password']);
+            }
+
+            // PIN: set when provided, remove when explicitly cleared
+            if (! empty($validated['pin'])) {
+                $updateData['pin'] = Hash::make($validated['pin']);
+            } elseif ($request->boolean('clear_pin')) {
+                $updateData['pin'] = null;
             }
 
             $user->update($updateData);
@@ -126,6 +140,7 @@ class UserManagementController extends Controller
                 'message' => $e->getMessage(),
                 'user_id' => $user->id,
             ]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update user. Please try again.');

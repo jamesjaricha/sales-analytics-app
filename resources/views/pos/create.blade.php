@@ -139,16 +139,44 @@
                             </template>
                         </div>
 
-                        <div x-show="payment_method === 'credit'" x-cloak class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Customer name <span class="text-red-500">*</span></label>
-                                <input type="text" name="customer_name" x-model="customer_name" x-bind:required="payment_method === 'credit'"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                        <div x-show="payment_method === 'credit'" x-cloak class="mt-4 space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Customer name <span class="text-red-500">*</span></label>
+                                    <input type="text" name="customer_name" x-model="customer_name" x-bind:required="payment_method === 'credit'"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                                    <input type="text" name="note" x-model="note" placeholder="e.g. phone number, due date"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
-                                <input type="text" name="note" x-model="note" placeholder="e.g. phone number, due date"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <!-- Partial payment: what the customer pays now vs what stays outstanding -->
+                            <div class="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount paid now (ZMW)</label>
+                                        <input type="number" min="0" step="0.01" name="paid_amount" x-model.number="paid_amount" placeholder="0.00"
+                                            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Paid via</label>
+                                        <select name="paid_via" x-model="paid_via"
+                                            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                            <option value="cash">Cash</option>
+                                            <option value="bank">Cash @ Bank</option>
+                                            <option value="mobile_money">Mobile Money</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex flex-col justify-end">
+                                        <p class="text-xs text-amber-700">Outstanding debt</p>
+                                        <p class="text-lg font-bold text-amber-700 tabular-nums">ZMW <span x-text="outstanding.toFixed(2)"></span></p>
+                                    </div>
+                                </div>
+                                <p x-show="paidTooMuch" x-cloak class="mt-2 text-xs text-red-600">
+                                    The paid amount must be less than the invoice total — for a fully paid invoice choose Cash, Bank or Mobile Money instead of Credit.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -216,6 +244,8 @@ document.addEventListener('alpine:init', () => {
         submitting: false,
         payment_method: 'cash',
         customer_name: '',
+        paid_amount: '',
+        paid_via: 'cash',
         note: '',
         methods: @json($paymentMethods),
 
@@ -277,8 +307,19 @@ document.addEventListener('alpine:init', () => {
             return this.items.reduce((s, it) => s + (Number(it.quantity) || 0) * (Number(it.unit_price) || 0), 0);
         },
 
+        get outstanding() {
+            if (this.payment_method !== 'credit') return 0;
+            return Math.max(this.total - (Number(this.paid_amount) || 0), 0);
+        },
+
+        get paidTooMuch() {
+            return this.payment_method === 'credit' && (Number(this.paid_amount) || 0) >= this.total && this.total > 0;
+        },
+
         get canSubmit() {
-            return this.items.length > 0 && this.items.every(it => it.product_name && Number(it.quantity) > 0);
+            return this.items.length > 0
+                && this.items.every(it => it.product_name && Number(it.quantity) > 0)
+                && !this.paidTooMuch;
         },
     }));
 });

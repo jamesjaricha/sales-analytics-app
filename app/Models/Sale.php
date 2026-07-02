@@ -20,6 +20,8 @@ class Sale extends Model
         'payment_method',
         'total_amount',
         'amount_due',
+        'paid_amount',
+        'paid_via',
         'customer_name',
         'note',
         'status',
@@ -31,6 +33,7 @@ class Sale extends Model
         'payment_method' => PaymentMethod::class,
         'total_amount' => 'decimal:2',
         'amount_due' => 'decimal:2',
+        'paid_amount' => 'decimal:2',
     ];
 
     public function user(): BelongsTo

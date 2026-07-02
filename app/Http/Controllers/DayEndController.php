@@ -38,7 +38,9 @@ class DayEndController extends Controller
             'expenses' => ['nullable', 'array'],
             'expenses.*.description' => ['nullable', 'required_with:expenses.*.amount', 'string', 'max:255'],
             'expenses.*.amount' => ['nullable', 'numeric', 'min:0'],
+            'expenses.*.payment_method' => ['nullable', 'in:cash,bank,mobile_money'],
             'counted_cash' => ['nullable', 'numeric', 'min:0'],
+            'opening_balance' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $report = $this->dayEnd->approve(
@@ -46,6 +48,7 @@ class DayEndController extends Controller
             Auth::user(),
             $validated['expenses'] ?? [],
             isset($validated['counted_cash']) ? (float) $validated['counted_cash'] : null,
+            isset($validated['opening_balance']) ? (float) $validated['opening_balance'] : null,
         );
 
         return redirect()->route('day-end.show', $report)

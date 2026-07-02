@@ -10,6 +10,7 @@ class Deduction extends Model
         'daily_sales_report_id',
         'description',
         'amount',
+        'payment_method',
     ];
 
     public function dailySalesReport()

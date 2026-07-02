@@ -23,6 +23,8 @@ class SaleService
      *     business_date?: string|null,
      *     payment_method: string,
      *     customer_name?: string|null,
+     *     paid_amount?: int|float|string|null,
+     *     paid_via?: string|null,
      *     note?: string|null,
      *     items: array<int, array{product_id?: int|null, product_name: string, quantity: int|string, unit_price: int|float|string}>
      * }  $data
@@ -42,13 +44,26 @@ class SaleService
                 $total += (int) $item['quantity'] * (float) $item['unit_price'];
             }
 
+            // Partial payment applies to credit sales only: the paid portion is
+            // settled now (via cash/bank/mobile) and the remainder stays outstanding.
+            $paidAmount = $method->isCredit() ? (float) ($data['paid_amount'] ?? 0) : 0.0;
+            $paidVia = $paidAmount > 0 ? ($data['paid_via'] ?? PaymentMethod::Cash->value) : null;
+
+            if ($paidAmount < 0 || $paidAmount >= $total) {
+                throw ValidationException::withMessages([
+                    'paid_amount' => 'The amount paid now must be less than the invoice total (use a non-credit method for full payment).',
+                ]);
+            }
+
             $sale = Sale::create([
                 'reference' => $this->generateReference($businessDate),
                 'user_id' => $user->id,
                 'business_date' => $businessDate,
                 'payment_method' => $method->value,
                 'total_amount' => $total,
-                'amount_due' => $method->isCredit() ? $total : 0,
+                'amount_due' => $method->isCredit() ? $total - $paidAmount : 0,
+                'paid_amount' => $paidAmount,
+                'paid_via' => $paidVia,
                 'customer_name' => $data['customer_name'] ?? null,
                 'note' => $data['note'] ?? null,
                 'status' => 'completed',

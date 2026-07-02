@@ -7,16 +7,24 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\PinLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
     // Public registration routes removed for security
     // Only admins can create users through the admin panel
-    
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+
+    // Default login is the till PIN screen; admins use the email form
+    Route::get('login', [PinLoginController::class, 'create'])
         ->name('login');
+
+    Route::post('login/pin', [PinLoginController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('login.pin');
+
+    Route::get('login/email', [AuthenticatedSessionController::class, 'create'])
+        ->name('login.email');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 

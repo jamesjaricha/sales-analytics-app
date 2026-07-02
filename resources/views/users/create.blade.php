@@ -102,6 +102,26 @@
                         required>
                 </div>
 
+                <!-- Till PIN -->
+                <div>
+                    <label for="pin" class="block text-sm font-medium text-gray-700 mb-2">
+                        Till PIN (sales reps only)
+                    </label>
+                    <input type="password"
+                        name="pin"
+                        id="pin"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        maxlength="6"
+                        autocomplete="off"
+                        placeholder="4–6 digits"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors">
+                    <p class="mt-1 text-xs text-gray-500">Lets a sales rep sign in at the till with a PIN instead of email + password. Leave blank to skip.</p>
+                    @error('pin')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Submit Buttons -->
                 <div class="flex justify-end space-x-4 pt-6">
                     <a href="{{ route('users.index') }}"

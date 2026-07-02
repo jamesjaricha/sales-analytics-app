@@ -91,6 +91,9 @@
 
         <!-- Security Notice -->
         <p class="text-center mt-6 text-sm text-gray-500">
+            Till operator? <a href="{{ route('login') }}" class="text-brand-600 hover:text-brand-700 font-medium">Sign in with your PIN</a>
+        </p>
+        <p class="text-center mt-2 text-sm text-gray-500">
             Access is restricted. Contact your administrator for an account.
         </p>
     </div>

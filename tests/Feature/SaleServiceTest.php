@@ -77,6 +77,62 @@ class SaleServiceTest extends TestCase
         $this->assertSame('John Banda', $sale->customer_name);
     }
 
+    public function test_partial_payment_on_credit_sale_reduces_amount_due(): void
+    {
+        $user = User::factory()->create(['role' => 'sales_rep']);
+
+        $sale = $this->service()->record([
+            'payment_method' => PaymentMethod::Credit->value,
+            'customer_name' => 'Mary Phiri',
+            'paid_amount' => 40,
+            'paid_via' => 'mobile_money',
+            'items' => [
+                ['product_name' => 'Cable', 'quantity' => 2, 'unit_price' => 50],
+            ],
+        ], $user);
+
+        $this->assertEquals(100, $sale->total_amount);
+        $this->assertEquals(40, $sale->paid_amount);
+        $this->assertSame('mobile_money', $sale->paid_via);
+        $this->assertEquals(60, $sale->amount_due); // 100 - 40
+    }
+
+    public function test_partial_payment_cannot_cover_the_full_invoice(): void
+    {
+        $user = User::factory()->create(['role' => 'sales_rep']);
+
+        try {
+            $this->service()->record([
+                'payment_method' => PaymentMethod::Credit->value,
+                'customer_name' => 'Mary Phiri',
+                'paid_amount' => 100,
+                'paid_via' => 'cash',
+                'items' => [['product_name' => 'Cable', 'quantity' => 2, 'unit_price' => 50]],
+            ], $user);
+            $this->fail('Expected a ValidationException for a full "partial" payment.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('paid_amount', $e->errors());
+        }
+
+        $this->assertDatabaseCount('sales', 0);
+    }
+
+    public function test_paid_amount_is_ignored_for_non_credit_sales(): void
+    {
+        $user = User::factory()->create(['role' => 'sales_rep']);
+
+        $sale = $this->service()->record([
+            'payment_method' => PaymentMethod::Cash->value,
+            'paid_amount' => 50,
+            'paid_via' => 'bank',
+            'items' => [['product_name' => 'X', 'quantity' => 1, 'unit_price' => 80]],
+        ], $user);
+
+        $this->assertEquals(0, $sale->paid_amount);
+        $this->assertNull($sale->paid_via);
+        $this->assertEquals(0, $sale->amount_due);
+    }
+
     public function test_cash_sale_has_no_amount_due(): void
     {
         $user = User::factory()->create();

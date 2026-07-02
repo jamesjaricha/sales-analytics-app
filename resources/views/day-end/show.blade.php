@@ -52,10 +52,15 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="space-y-6">
                 <!-- Cash at hand -->
+                @php($cashExpenses = $report->deductions->where('payment_method', 'cash')->sum('amount'))
                 <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200 p-5 text-center">
                     <p class="text-sm text-green-700">Cash at hand</p>
-                    <p class="text-4xl font-bold text-green-900 mt-1">ZMW {{ number_format($report->cash_at_hand, 2) }}</p>
-                    <p class="text-xs text-green-700 mt-1">Cash {{ number_format($report->total_cash, 2) }} − expenses {{ number_format($report->total_deductions, 2) }}</p>
+                    <p class="text-4xl font-bold text-green-900 mt-1 tabular-nums">ZMW {{ number_format($report->cash_at_hand, 2) }}</p>
+                    <p class="text-xs text-green-700 mt-1 tabular-nums">
+                        B/F {{ number_format((float) ($report->opening_balance ?? 0), 2) }}
+                        + cash {{ number_format($report->total_cash, 2) }}
+                        − cash expenses {{ number_format((float) $cashExpenses, 2) }}
+                    </p>
                 </div>
 
                 @if($report->counted_cash !== null)
@@ -74,12 +79,17 @@
 
                 <!-- Expenses -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="px-5 py-3 text-sm font-semibold text-gray-700 border-b border-gray-100">Cash expenses</div>
+                    <div class="px-5 py-3 text-sm font-semibold text-gray-700 border-b border-gray-100">Expenses</div>
                     <div class="divide-y divide-gray-100">
                         @forelse($report->deductions as $deduction)
-                            <div class="px-5 py-3 flex items-center justify-between text-sm">
-                                <span class="text-gray-700">{{ $deduction->description }}</span>
-                                <span class="font-medium text-red-600">ZMW {{ number_format($deduction->amount, 2) }}</span>
+                            <div class="px-5 py-3 flex items-center justify-between gap-2 text-sm">
+                                <div class="min-w-0">
+                                    <span class="text-gray-700">{{ $deduction->description }}</span>
+                                    <span class="ml-2 inline-flex px-2 py-0.5 rounded-full text-xs font-medium {{ ($deduction->payment_method ?? 'cash') === 'cash' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600' }}">
+                                        {{ ['cash' => 'Cash', 'bank' => 'Bank', 'mobile_money' => 'Mobile Money'][$deduction->payment_method ?? 'cash'] ?? $deduction->payment_method }}
+                                    </span>
+                                </div>
+                                <span class="font-medium text-red-600 tabular-nums shrink-0">ZMW {{ number_format($deduction->amount, 2) }}</span>
                             </div>
                         @empty
                             <div class="px-5 py-6 text-center text-sm text-gray-400">No expenses recorded.</div>
@@ -98,7 +108,12 @@
                         <div class="px-5 py-3 flex items-center justify-between gap-2">
                             <div class="min-w-0">
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ $invoice->reference }}</p>
-                                <p class="text-xs text-gray-500">{{ $invoice->created_at->format('H:i') }} · {{ $invoice->payment_method->label() }}@if($invoice->customer_name) · {{ $invoice->customer_name }}@endif</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ $invoice->created_at->format('H:i') }} · {{ $invoice->payment_method->label() }}@if($invoice->customer_name) · {{ $invoice->customer_name }}@endif
+                                    @if((float) $invoice->paid_amount > 0)
+                                        · paid {{ number_format((float) $invoice->paid_amount, 2) }} ({{ ['cash' => 'cash', 'bank' => 'bank', 'mobile_money' => 'mobile'][$invoice->paid_via] ?? $invoice->paid_via }}) · owing {{ number_format((float) $invoice->amount_due, 2) }}
+                                    @endif
+                                </p>
                             </div>
                             <p class="text-sm font-semibold text-gray-900 shrink-0">ZMW {{ number_format($invoice->total_amount, 2) }}</p>
                         </div>

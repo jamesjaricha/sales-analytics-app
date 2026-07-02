@@ -36,12 +36,13 @@
         <tr>
             <td><div class="label">Mobile money</div><div class="val">ZMW {{ number_format($report->total_mobile_money, 2) }}</div></td>
             <td><div class="label">Outstanding debt</div><div class="val">ZMW {{ number_format($report->total_outstanding, 2) }}</div></td>
-            <td><div class="label">Cash expenses</div><div class="val">ZMW {{ number_format($report->total_deductions, 2) }}</div></td>
+            <td><div class="label">Total expenses</div><div class="val">ZMW {{ number_format($report->total_deductions, 2) }}</div></td>
         </tr>
     </table>
 
+    @php($pdfCashExpenses = $report->deductions->where('payment_method', 'cash')->sum('amount'))
     <div class="cash-box">
-        <div class="muted">Cash at hand (cash &minus; expenses)</div>
+        <div class="muted">Cash at hand (b/f {{ number_format((float) ($report->opening_balance ?? 0), 2) }} + cash {{ number_format($report->total_cash, 2) }} &minus; cash expenses {{ number_format((float) $pdfCashExpenses, 2) }})</div>
         <div class="amt">ZMW {{ number_format($report->cash_at_hand, 2) }}</div>
         @if($report->counted_cash !== null)
             @php($variance = (float) $report->counted_cash - (float) $report->cash_at_hand)
@@ -50,10 +51,14 @@
     </div>
 
     @if($report->deductions->count())
-        <div class="section-title">Cash expenses</div>
+        <div class="section-title">Expenses</div>
         <table class="list">
             @foreach($report->deductions as $deduction)
-                <tr><td>{{ $deduction->description }}</td><td class="right">ZMW {{ number_format($deduction->amount, 2) }}</td></tr>
+                <tr>
+                    <td>{{ $deduction->description }}</td>
+                    <td>{{ ['cash' => 'Cash', 'bank' => 'Bank', 'mobile_money' => 'Mobile Money'][$deduction->payment_method ?? 'cash'] ?? $deduction->payment_method }}</td>
+                    <td class="right">ZMW {{ number_format($deduction->amount, 2) }}</td>
+                </tr>
             @endforeach
         </table>
     @endif
@@ -68,7 +73,7 @@
                 <tr>
                     <td>{{ $invoice->reference }}</td>
                     <td>{{ $invoice->created_at->format('H:i') }}</td>
-                    <td>{{ $invoice->payment_method->label() }}@if($invoice->customer_name) ({{ $invoice->customer_name }})@endif</td>
+                    <td>{{ $invoice->payment_method->label() }}@if($invoice->customer_name) ({{ $invoice->customer_name }})@endif @if((float) $invoice->paid_amount > 0) — paid {{ number_format((float) $invoice->paid_amount, 2) }}, owing {{ number_format((float) $invoice->amount_due, 2) }}@endif</td>
                     <td class="right">ZMW {{ number_format($invoice->total_amount, 2) }}</td>
                 </tr>
             @empty

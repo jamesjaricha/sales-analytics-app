@@ -30,9 +30,14 @@ class DayEndService
             ->latest()
             ->get();
 
+        // Full invoices in a method, plus partial payments on credit invoices
+        // settled via that method.
         $byMethod = fn (PaymentMethod $m): float => (float) $sales
             ->filter(fn (Sale $s) => $s->payment_method === $m)
-            ->sum(fn (Sale $s) => (float) $s->total_amount);
+            ->sum(fn (Sale $s) => (float) $s->total_amount)
+            + (float) $sales
+                ->filter(fn (Sale $s) => $s->payment_method === PaymentMethod::Credit && $s->paid_via === $m->value)
+                ->sum(fn (Sale $s) => (float) $s->paid_amount);
 
         return [
             'business_date' => $businessDate,
@@ -59,13 +64,21 @@ class DayEndService
     }
 
     /**
-     * Approve and lock the day-end: persist the reconciliation, record cash
-     * expenses, and attach the day's invoices to the report.
+     * Approve and lock the day-end: persist the reconciliation, record expenses
+     * (cash, bank or mobile money), and attach the day's invoices to the report.
      *
-     * @param  array<int, array{description?: string|null, amount?: float|int|string|null}>  $expenses
+     * Drawer maths: cash at hand = balance b/f + cash takings − cash expenses.
+     * Bank/mobile expenses never touch the drawer.
+     *
+     * @param  array<int, array{description?: string|null, amount?: float|int|string|null, payment_method?: string|null}>  $expenses
      */
-    public function approve(string $businessDate, User $admin, array $expenses = [], ?float $countedCash = null): DailySalesReport
-    {
+    public function approve(
+        string $businessDate,
+        User $admin,
+        array $expenses = [],
+        ?float $countedCash = null,
+        ?float $openingBalance = null,
+    ): DailySalesReport {
         if ($this->alreadyApproved($businessDate)) {
             throw ValidationException::withMessages([
                 'business_date' => "The day-end for {$businessDate} has already been approved.",
@@ -80,13 +93,20 @@ class DayEndService
             ]);
         }
 
-        return DB::transaction(function () use ($summary, $admin, $expenses, $countedCash, $businessDate) {
+        return DB::transaction(function () use ($summary, $admin, $expenses, $countedCash, $openingBalance, $businessDate) {
             $totalDeductions = 0.0;
+            $cashExpenses = 0.0;
             foreach ($expenses as $expense) {
-                $totalDeductions += (float) ($expense['amount'] ?? 0);
+                $amount = (float) ($expense['amount'] ?? 0);
+                $totalDeductions += $amount;
+                if (($expense['payment_method'] ?? PaymentMethod::Cash->value) === PaymentMethod::Cash->value) {
+                    $cashExpenses += $amount;
+                }
             }
 
-            $cashAtHand = $summary['total_cash'] - $totalDeductions;
+            // Only cash expenses leave the drawer; bank/mobile expenses come out
+            // of their own settlement lines.
+            $cashAtHand = ($openingBalance ?? 0.0) + $summary['total_cash'] - $cashExpenses;
 
             $report = DailySalesReport::create([
                 'user_id' => $admin->id,
@@ -100,6 +120,7 @@ class DayEndService
                 'total_mobile_money' => $summary['total_mobile_money'],
                 'total_outstanding' => $summary['total_outstanding'],
                 'counted_cash' => $countedCash,
+                'opening_balance' => $openingBalance,
                 'approved_by' => $admin->id,
                 'approved_at' => now(),
             ]);
@@ -109,6 +130,7 @@ class DayEndService
                     $report->deductions()->create([
                         'description' => $expense['description'],
                         'amount' => (float) $expense['amount'],
+                        'payment_method' => $expense['payment_method'] ?? PaymentMethod::Cash->value,
                     ]);
                 }
             }
