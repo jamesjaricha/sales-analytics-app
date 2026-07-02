@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PaymentMethod;
 use App\Models\DailySalesReport;
+use App\Models\DebtPayment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -65,6 +66,7 @@ class SaleService
                 'paid_amount' => $paidAmount,
                 'paid_via' => $paidVia,
                 'customer_name' => $data['customer_name'] ?? null,
+                'customer_phone' => $data['customer_phone'] ?? null,
                 'note' => $data['note'] ?? null,
                 'status' => 'completed',
             ]);
@@ -85,6 +87,49 @@ class SaleService
             }
 
             return $sale;
+        });
+    }
+
+    /**
+     * Record a repayment against an outstanding credit invoice. The money is
+     * settled into the day it is RECEIVED, so it shows up in today's takings
+     * and day-end — even if the original invoice's day is already locked.
+     */
+    public function receivePayment(Sale $sale, float $amount, string $method, User $receiver, ?string $note = null): DebtPayment
+    {
+        $today = now()->toDateString();
+
+        // A locked day cannot take more money — receive it tomorrow
+        $this->assertDayOpen($today);
+
+        if ($sale->payment_method !== PaymentMethod::Credit || $sale->status !== 'completed') {
+            throw ValidationException::withMessages([
+                'sale' => 'Repayments can only be recorded against completed credit invoices.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($sale, $amount, $method, $receiver, $note, $today) {
+            // Re-read the balance inside the transaction to block overpayment races
+            $sale = Sale::lockForUpdate()->findOrFail($sale->id);
+            $due = (float) $sale->amount_due;
+
+            if ($amount <= 0 || $amount > $due + 0.005) {
+                throw ValidationException::withMessages([
+                    'amount' => 'The payment must be between 0.01 and the outstanding balance of '.number_format($due, 2).'.',
+                ]);
+            }
+
+            $payment = $sale->payments()->create([
+                'amount' => $amount,
+                'payment_method' => $method,
+                'business_date' => $today,
+                'received_by' => $receiver->id,
+                'note' => $note,
+            ]);
+
+            $sale->update(['amount_due' => max($due - $amount, 0)]);
+
+            return $payment;
         });
     }
 

@@ -77,6 +77,26 @@
                     </div>
                 @endif
 
+                @if($report->debtPayments->isNotEmpty())
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-5 py-3 flex items-center justify-between text-sm border-b border-gray-100">
+                            <span class="font-semibold text-gray-700">Debt repayments received</span>
+                            <span class="font-semibold text-brand-700 tabular-nums">ZMW {{ number_format($report->debtPayments->sum('amount'), 2) }}</span>
+                        </div>
+                        <div class="divide-y divide-gray-100">
+                            @foreach($report->debtPayments as $payment)
+                                <div class="px-5 py-3 flex items-center justify-between gap-2 text-sm">
+                                    <div class="min-w-0">
+                                        <p class="font-medium text-gray-900 truncate">{{ $payment->sale?->reference }} · {{ $payment->sale?->customer_name }}</p>
+                                        <p class="text-xs text-gray-500">{{ ['cash' => 'Cash', 'bank' => 'Bank', 'mobile_money' => 'Mobile Money'][$payment->payment_method] ?? $payment->payment_method }} · received by {{ $payment->receivedBy?->name ?? 'unknown' }}</p>
+                                    </div>
+                                    <p class="font-semibold text-gray-900 tabular-nums shrink-0">ZMW {{ number_format((float) $payment->amount, 2) }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Expenses -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-5 py-3 text-sm font-semibold text-gray-700 border-b border-gray-100">Expenses</div>

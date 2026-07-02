@@ -40,7 +40,6 @@ class DayEndController extends Controller
             'expenses.*.amount' => ['nullable', 'numeric', 'min:0'],
             'expenses.*.payment_method' => ['nullable', 'in:cash,bank,mobile_money'],
             'counted_cash' => ['nullable', 'numeric', 'min:0'],
-            'opening_balance' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $report = $this->dayEnd->approve(
@@ -48,7 +47,6 @@ class DayEndController extends Controller
             Auth::user(),
             $validated['expenses'] ?? [],
             isset($validated['counted_cash']) ? (float) $validated['counted_cash'] : null,
-            isset($validated['opening_balance']) ? (float) $validated['opening_balance'] : null,
         );
 
         return redirect()->route('day-end.show', $report)
@@ -60,7 +58,7 @@ class DayEndController extends Controller
      */
     public function show(DailySalesReport $dayEnd)
     {
-        $dayEnd->load(['deductions', 'approvedBy', 'sales' => fn ($q) => $q->latest()]);
+        $dayEnd->load(['deductions', 'approvedBy', 'debtPayments.sale', 'debtPayments.receivedBy', 'sales' => fn ($q) => $q->latest()]);
 
         return view('day-end.show', ['report' => $dayEnd]);
     }
@@ -70,7 +68,7 @@ class DayEndController extends Controller
      */
     public function pdf(DailySalesReport $dayEnd)
     {
-        $dayEnd->load(['deductions', 'approvedBy', 'sales' => fn ($q) => $q->latest()]);
+        $dayEnd->load(['deductions', 'approvedBy', 'debtPayments.sale', 'debtPayments.receivedBy', 'sales' => fn ($q) => $q->latest()]);
 
         return Pdf::loadView('day-end.pdf', ['report' => $dayEnd])
             ->download('day-end-'.$dayEnd->sale_date->format('Y-m-d').'.pdf');

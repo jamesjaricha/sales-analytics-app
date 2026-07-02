@@ -23,6 +23,7 @@ class Sale extends Model
         'paid_amount',
         'paid_via',
         'customer_name',
+        'customer_phone',
         'note',
         'status',
         'day_end_report_id',
@@ -44,6 +45,14 @@ class Sale extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    /**
+     * Repayments received against this credit invoice.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(DebtPayment::class);
     }
 
     public function dayEndReport(): BelongsTo

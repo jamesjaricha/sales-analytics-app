@@ -50,6 +50,20 @@
         @endif
     </div>
 
+    @if($report->debtPayments->count())
+        <div class="section-title">Debt repayments received ({{ $report->debtPayments->count() }})</div>
+        <table class="list">
+            @foreach($report->debtPayments as $payment)
+                <tr>
+                    <td>{{ $payment->sale?->reference }} — {{ $payment->sale?->customer_name }}</td>
+                    <td>{{ ['cash' => 'Cash', 'bank' => 'Bank', 'mobile_money' => 'Mobile Money'][$payment->payment_method] ?? $payment->payment_method }}</td>
+                    <td>{{ $payment->receivedBy?->name ?? 'unknown' }}</td>
+                    <td class="right">ZMW {{ number_format((float) $payment->amount, 2) }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+
     @if($report->deductions->count())
         <div class="section-title">Expenses</div>
         <table class="list">

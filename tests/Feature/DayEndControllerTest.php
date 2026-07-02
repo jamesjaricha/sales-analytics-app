@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\DailySalesReport;
+use App\Models\DayOpening;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -64,8 +65,14 @@ class DayEndControllerTest extends TestCase
             'status' => 'completed',
         ]);
 
-        $response = $this->actingAs($admin)->post('/day-end', [
+        // Balance b/f captured at sign-in, not posted with the day-end
+        DayOpening::create([
+            'business_date' => now()->toDateString(),
             'opening_balance' => 200,
+            'opened_by' => $admin->id,
+        ]);
+
+        $response = $this->actingAs($admin)->post('/day-end', [
             'expenses' => [
                 ['description' => 'Fuel', 'amount' => 50, 'payment_method' => 'cash'],
                 ['description' => 'Airtime', 'amount' => 30, 'payment_method' => 'mobile_money'],

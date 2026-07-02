@@ -1,15 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DailySalesController;
 use App\Http\Controllers\DashboardController;
 // RoleMiddleware now registered as alias 'role' in bootstrap/app.php
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DailySalesController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\MonthlyReportController;
-use App\Http\Controllers\StockController;
-use App\Http\Controllers\SaleController;
 use App\Http\Controllers\DayEndController;
+use App\Http\Controllers\DayOpeningController;
+use App\Http\Controllers\DebtorController;
+use App\Http\Controllers\MonthlyReportController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SaleController;
+use App\Http\Controllers\StockController;
+use Illuminate\Support\Facades\Route;
 
 // Redirect root to login - prevents unnecessary processing
 Route::get('/', function () {
@@ -22,6 +24,7 @@ Route::get('/health', function () {
     try {
         // Quick database check
         \Illuminate\Support\Facades\DB::connection()->getPdo();
+
         return response()->json(['status' => 'ok', 'timestamp' => now()], 200);
     } catch (\Exception $e) {
         return response()->json(['status' => 'error', 'message' => 'Database connection failed'], 500);
@@ -30,14 +33,19 @@ Route::get('/health', function () {
 
 // Session keep-alive endpoint (authenticated users only)
 Route::get('/session/ping', function () {
-    if (!auth()->check()) {
+    if (! auth()->check()) {
         return response()->json(['status' => 'unauthenticated'], 401);
     }
+
     return response()->json(['status' => 'ok', 'timestamp' => now()], 200);
 })->middleware('auth')->name('session.ping');
 
 // Combined auth routes for both admin and sales_rep
 Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(function () {
+    // Start of day — capture the balance brought forward before selling
+    Route::get('/day/open', [DayOpeningController::class, 'create'])->name('day.open');
+    Route::post('/day/open', [DayOpeningController::class, 'store'])->name('day.open.store')->middleware('throttle:30,1');
+
     // POS — point-of-sale invoicing (Module 1: new default record screen)
     Route::get('/pos', [SaleController::class, 'create'])->name('pos.create');
     Route::post('/pos', [SaleController::class, 'store'])->name('pos.store')->middleware('throttle:120,1');
@@ -48,6 +56,10 @@ Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(fun
     Route::post('/day-end', [DayEndController::class, 'store'])->name('day-end.store')->middleware('throttle:30,1');
     Route::get('/day-end/{dayEnd}', [DayEndController::class, 'show'])->name('day-end.show')->whereNumber('dayEnd');
     Route::get('/day-end/{dayEnd}/pdf', [DayEndController::class, 'pdf'])->name('day-end.pdf')->whereNumber('dayEnd')->middleware('throttle:20,1');
+
+    // Debtors — clients with outstanding credit invoices + repayments
+    Route::get('/debtors', [DebtorController::class, 'index'])->name('debtors.index');
+    Route::post('/debtors/{sale}/payments', [DebtorController::class, 'storePayment'])->name('debtors.payments.store')->whereNumber('sale')->middleware('throttle:60,1');
 
     // Batch entry retired — the old URL now redirects to the POS screen
     Route::get('/sales/create', fn () => redirect()->route('pos.create'))->name('sales.create');
@@ -111,4 +123,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

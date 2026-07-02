@@ -140,16 +140,22 @@
                         </div>
 
                         <div x-show="payment_method === 'credit'" x-cloak class="mt-4 space-y-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Customer name <span class="text-red-500">*</span></label>
                                     <input type="text" name="customer_name" x-model="customer_name" x-bind:required="payment_method === 'credit'"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                        class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone number <span class="text-red-500">*</span></label>
+                                    <input type="tel" name="customer_phone" x-model="customer_phone" x-bind:required="payment_method === 'credit'"
+                                        inputmode="tel" placeholder="e.g. 0977 123 456"
+                                        class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
-                                    <input type="text" name="note" x-model="note" placeholder="e.g. phone number, due date"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                    <input type="text" name="note" x-model="note" placeholder="e.g. due date"
+                                        class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                                 </div>
                             </div>
                             <!-- Partial payment: what the customer pays now vs what stays outstanding -->
@@ -193,7 +199,13 @@
             <div class="space-y-4">
                 <div class="rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-5 text-white shadow-sm shadow-emerald-600/20">
                     <p class="text-sm text-emerald-50/90">Today's takings · {{ $invoices->count() }} invoice{{ $invoices->count() === 1 ? '' : 's' }}</p>
-                    <p class="text-3xl font-bold mt-1">ZMW {{ number_format($invoices->sum('total_amount'), 2) }}</p>
+                    <p class="text-3xl font-bold mt-1 tabular-nums">ZMW {{ number_format($invoices->sum('total_amount'), 2) }}</p>
+                    @if($opening)
+                        <p class="text-xs text-emerald-50/80 mt-2 tabular-nums">
+                            Balance b/f: ZMW {{ number_format((float) $opening->opening_balance, 2) }}
+                            · <a href="{{ route('day.open') }}" class="underline hover:text-white">change</a>
+                        </p>
+                    @endif
                 </div>
 
                 <a href="{{ route('day-end.create') }}"
@@ -244,6 +256,7 @@ document.addEventListener('alpine:init', () => {
         submitting: false,
         payment_method: 'cash',
         customer_name: '',
+        customer_phone: '',
         paid_amount: '',
         paid_via: 'cash',
         note: '',

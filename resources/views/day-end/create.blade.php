@@ -21,9 +21,9 @@
             </div>
         @endif
 
-        @if($summary['invoice_count'] === 0)
+        @if($summary['invoice_count'] === 0 && $summary['debt_payments']->isEmpty())
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 text-center">
-                <p class="text-gray-500">No sales have been recorded yet today — there is nothing to reconcile.</p>
+                <p class="text-gray-500">No sales or debt repayments have been recorded yet today — there is nothing to reconcile.</p>
                 <a href="{{ route('pos.create') }}" class="inline-block mt-4 text-brand-600 hover:text-brand-700 font-medium">Go to Point of Sale</a>
             </div>
         @else
@@ -70,6 +70,26 @@
                             <p class="text-lg font-bold text-amber-600">{{ number_format($summary['total_outstanding'], 2) }}</p>
                         </div>
                     </div>
+
+                    @if($summary['debt_payments']->isNotEmpty())
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="px-5 py-3 flex items-center justify-between text-sm border-b border-gray-100">
+                                <span class="font-semibold text-gray-700">{{ $summary['debt_payments']->count() }} debt repayment{{ $summary['debt_payments']->count() === 1 ? '' : 's' }} received today</span>
+                                <span class="font-semibold text-brand-700 tabular-nums">ZMW {{ number_format($summary['debt_payments_total'], 2) }}</span>
+                            </div>
+                            <div class="divide-y divide-gray-100">
+                                @foreach($summary['debt_payments'] as $payment)
+                                    <div class="px-5 py-3 flex items-center justify-between gap-2 text-sm">
+                                        <div class="min-w-0">
+                                            <p class="font-medium text-gray-900 truncate">{{ $payment->sale?->reference }} · {{ $payment->sale?->customer_name }}</p>
+                                            <p class="text-xs text-gray-500">{{ ['cash' => 'Cash', 'bank' => 'Bank', 'mobile_money' => 'Mobile Money'][$payment->payment_method] ?? $payment->payment_method }} · received by {{ $payment->receivedBy?->name ?? 'unknown' }}</p>
+                                        </div>
+                                        <p class="font-semibold text-gray-900 tabular-nums shrink-0">ZMW {{ number_format((float) $payment->amount, 2) }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-5 py-3 text-sm font-semibold text-gray-700 border-b border-gray-100">
@@ -137,15 +157,16 @@
                 <div x-show="step === 3" class="space-y-4">
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
                         <h2 class="text-lg font-semibold text-gray-900 mb-1">Count the cash drawer</h2>
-                        <p class="text-sm text-gray-500 mb-4">Enter the balance brought forward and the physical cash counted, to check against what's expected.</p>
+                        <p class="text-sm text-gray-500 mb-4">Enter the physical cash counted, to check against what's expected.</p>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="space-y-3">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Balance brought forward (ZMW)</label>
-                                    <input type="number" min="0" step="0.01" name="opening_balance" x-model.number="opening_balance" placeholder="0.00"
-                                        class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
-                                    <p class="text-xs text-gray-500 mt-1">Cash that was already in the drawer when the day started.</p>
+                                <div class="rounded-lg bg-gray-50 border border-gray-200 px-3 py-2.5">
+                                    <p class="text-xs text-gray-500">Balance brought forward (set at sign-in)</p>
+                                    <p class="text-base font-semibold text-gray-900 tabular-nums">
+                                        ZMW {{ number_format($summary['opening_balance'] ?? 0, 2) }}
+                                        <a href="{{ route('day.open') }}" class="ml-1 text-xs font-medium text-brand-600 hover:text-brand-700">change</a>
+                                    </p>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Counted cash (ZMW)</label>
@@ -223,7 +244,7 @@ document.addEventListener('alpine:init', () => {
         submitting: false,
         expenses: [],
         counted_cash: '',
-        opening_balance: '',
+        opening_balance: @json($summary['opening_balance'] ?? 0),
         totalCash: @json($summary['total_cash'] ?? 0),
 
         addExpense() { this.expenses.push({ description: '', amount: '', payment_method: 'cash' }); },

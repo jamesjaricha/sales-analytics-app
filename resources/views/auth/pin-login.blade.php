@@ -10,19 +10,30 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>[x-cloak]{display:none!important}</style>
+    <style>
+        [x-cloak]{display:none!important}
+        .till-bg {
+            background:
+                radial-gradient(60rem 60rem at 85% -10%, rgba(16, 185, 129, 0.25), transparent 60%),
+                radial-gradient(50rem 50rem at -10% 110%, rgba(5, 150, 105, 0.2), transparent 55%),
+                linear-gradient(160deg, #022c22 0%, #064e3b 55%, #065f46 100%);
+        }
+    </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-brand-50 via-gray-50 to-gray-50">
+<body class="till-bg min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-md animate-rise-in" x-data="pinLogin">
         <!-- Logo / Brand -->
         <div class="text-center mb-8">
-            <img src="{{ asset('images/logo.png') }}" alt="Ulwazi Energy" class="inline-block h-16 sm:h-20 w-auto mb-4">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Till sign in</h1>
-            <p class="text-gray-500" x-text="selected ? 'Enter your PIN, ' + selectedName : 'Tap your name to continue'"></p>
+            <div class="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-white shadow-lg shadow-black/20 mb-5 p-2">
+                <img src="{{ asset('images/logo.png') }}" alt="Ulwazi Energy" class="max-h-full w-auto">
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-1">Till sign in</h1>
+            <p class="text-emerald-100/80" x-text="selected ? 'Enter your PIN, ' + selectedName : 'Tap your name to continue'"></p>
+            <p class="text-xs text-emerald-200/50 mt-1">{{ now()->format('l, d F Y') }}</p>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-200/80 p-8">
+        <div class="bg-white rounded-3xl shadow-2xl shadow-black/30 p-8">
 
             @if ($errors->any())
                 <div class="bg-accent-50 border border-accent-200 text-accent-700 px-4 py-3 rounded-xl mb-6 text-sm">
@@ -41,11 +52,16 @@
                 </p>
             @else
                 <!-- Step 1: pick a name -->
-                <div x-show="!selected" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div x-show="!selected" class="grid {{ $reps->count() === 1 ? 'grid-cols-1' : 'grid-cols-2' }} gap-3">
                     @foreach ($reps as $rep)
+                        @php($initials = collect(explode(' ', trim($rep->name)))->filter()->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->take(2)->implode(''))
                         <button type="button" x-on:click="pick({{ $rep->id }}, @js($rep->name))"
-                            class="px-4 py-4 rounded-xl border-2 border-gray-200 text-gray-800 font-semibold hover:border-brand-500 hover:bg-brand-50 text-center [transition:background-color_160ms_var(--ease-out),border-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.97]">
-                            {{ $rep->name }}
+                            class="group flex flex-col items-center gap-2.5 px-4 py-5 rounded-2xl border-2 border-gray-100 bg-gray-50/60 hover:border-brand-500 hover:bg-brand-50 [transition:background-color_160ms_var(--ease-out),border-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.96] animate-rise-in"
+                            style="animation-delay: {{ 60 + $loop->index * 50 }}ms">
+                            <span class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white text-base font-bold shadow-sm shadow-brand-600/30">
+                                {{ $initials ?: '?' }}
+                            </span>
+                            <span class="text-sm font-semibold text-gray-800 group-hover:text-brand-700 text-center leading-tight">{{ $rep->name }}</span>
                         </button>
                     @endforeach
                 </div>
@@ -59,7 +75,7 @@
                     <!-- PIN dots -->
                     <div class="flex justify-center gap-3 mb-6 h-4" aria-label="PIN entered">
                         <template x-for="i in 6" :key="i">
-                            <span class="w-3.5 h-3.5 rounded-full border-2"
+                            <span class="w-3.5 h-3.5 rounded-full border-2 transition-colors duration-150"
                                 x-bind:class="i <= pin.length ? 'bg-brand-600 border-brand-600' : 'border-gray-300'"
                                 x-show="i <= Math.max(pin.length, 4)"></span>
                         </template>
@@ -94,8 +110,8 @@
             @endif
         </div>
 
-        <p class="text-center mt-6 text-sm text-gray-500">
-            Admin? <a href="{{ route('login.email') }}" class="text-brand-600 hover:text-brand-700 font-medium">Sign in with email</a>
+        <p class="text-center mt-6 text-sm text-emerald-100/70">
+            Admin? <a href="{{ route('login.email') }}" class="text-white font-medium underline decoration-emerald-300/50 underline-offset-4 hover:decoration-white transition-colors">Sign in with email</a>
         </p>
     </div>
 

@@ -63,6 +63,14 @@ class DailySalesReport extends Model
     }
 
     /**
+     * Debt repayments received on this trading day.
+     */
+    public function debtPayments()
+    {
+        return $this->hasMany(DebtPayment::class, 'day_end_report_id');
+    }
+
+    /**
      * Admin who approved the day-end.
      */
     public function approvedBy()
