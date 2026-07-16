@@ -176,8 +176,8 @@ class StockController extends Controller
             $recentMovements = StockMovement::dateRange($startDate, $endDate)
                 ->with(['product', 'user'])
                 ->latest()
-                ->limit(100)
-                ->get();
+                ->paginate(50)
+                ->appends($request->query());
 
             return view('stock.reports', compact(
                 'summary',
