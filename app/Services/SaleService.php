@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -77,20 +78,33 @@ class SaleService
                 default => 0,
             };
 
-            $sale = Sale::create([
-                'reference' => $this->generateReference($businessDate),
-                'user_id' => $user->id,
-                'business_date' => $businessDate,
-                'payment_method' => $method->value,
-                'total_amount' => $total,
-                'amount_due' => $amountDue,
-                'paid_amount' => $method === PaymentMethod::Split ? $tendered : $paidAmount,
-                'paid_via' => $paidVia,
-                'customer_name' => $data['customer_name'] ?? null,
-                'customer_phone' => $data['customer_phone'] ?? null,
-                'note' => $data['note'] ?? null,
-                'status' => 'completed',
-            ]);
+            // Two tills recording in the same instant can compute the same
+            // reference; the unique index rejects the loser, so retry with the
+            // next sequence instead of failing the sale.
+            $attempt = 0;
+            do {
+                try {
+                    $sale = Sale::create([
+                        'reference' => $this->generateReference($businessDate, $attempt),
+                        'user_id' => $user->id,
+                        'business_date' => $businessDate,
+                        'payment_method' => $method->value,
+                        'total_amount' => $total,
+                        'amount_due' => $amountDue,
+                        'paid_amount' => $method === PaymentMethod::Split ? $tendered : $paidAmount,
+                        'paid_via' => $paidVia,
+                        'customer_name' => $data['customer_name'] ?? null,
+                        'customer_phone' => $data['customer_phone'] ?? null,
+                        'note' => $data['note'] ?? null,
+                        'status' => 'completed',
+                    ]);
+                    break;
+                } catch (UniqueConstraintViolationException $e) {
+                    if (++$attempt >= 5) {
+                        throw $e;
+                    }
+                }
+            } while (true);
 
             foreach ($tenders as $tender) {
                 $sale->salePayments()->create($tender);
@@ -322,12 +336,13 @@ class SaleService
     }
 
     /**
-     * Per-day sequential reference: INV-YYYYMMDD-####.
+     * Per-day sequential reference: INV-YYYYMMDD-####. The offset bumps the
+     * sequence on retry after a unique-reference collision between tills.
      */
-    private function generateReference(string $businessDate): string
+    private function generateReference(string $businessDate, int $offset = 0): string
     {
         $datePart = Carbon::parse($businessDate)->format('Ymd');
-        $sequence = Sale::whereDate('business_date', $businessDate)->count() + 1;
+        $sequence = Sale::whereDate('business_date', $businessDate)->count() + 1 + $offset;
 
         return sprintf('INV-%s-%04d', $datePart, $sequence);
     }

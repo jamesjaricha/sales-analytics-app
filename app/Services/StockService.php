@@ -40,15 +40,20 @@ class StockService
             $referenceType,
             $unitCost
         ) {
-            // Get current stock before adjustment
-            $stockBefore = $product->stock_quantity;
+            // Re-read under a row lock: the caller's instance may be stale when
+            // two tills sell the same product at once, and a stale read here
+            // would lose a deduction and falsify stock_before/stock_after.
+            $locked = Product::whereKey($product->getKey())->lockForUpdate()->firstOrFail();
 
-            // Calculate new stock
+            $stockBefore = $locked->stock_quantity;
             $stockAfter = $stockBefore + $quantity;
 
-            // Update product stock
+            $locked->stock_quantity = $stockAfter;
+            $locked->save();
+
+            // Keep the caller's instance in step with what was persisted
             $product->stock_quantity = $stockAfter;
-            $product->save();
+            $product->syncOriginalAttribute('stock_quantity');
 
             // Create stock movement record
             $movement = StockMovement::create([
