@@ -72,7 +72,7 @@ class DayEndController extends Controller
      */
     public function show(DailySalesReport $dayEnd)
     {
-        $dayEnd->load(['deductions', 'approvedBy', 'debtPayments.sale', 'debtPayments.receivedBy', 'sales' => fn ($q) => $q->latest()]);
+        $dayEnd->load(['deductions', 'approvedBy', 'debtPayments.sale', 'debtPayments.receivedBy', 'sales' => fn ($q) => $q->latest(), 'sales.salePayments']);
 
         return view('day-end.show', ['report' => $dayEnd]);
     }
@@ -82,7 +82,7 @@ class DayEndController extends Controller
      */
     public function pdf(DailySalesReport $dayEnd)
     {
-        $dayEnd->load(['deductions', 'approvedBy', 'debtPayments.sale', 'debtPayments.receivedBy', 'sales' => fn ($q) => $q->latest()]);
+        $dayEnd->load(['deductions', 'approvedBy', 'debtPayments.sale', 'debtPayments.receivedBy', 'sales' => fn ($q) => $q->latest(), 'sales.salePayments']);
 
         return Pdf::loadView('day-end.pdf', ['report' => $dayEnd])
             ->download('day-end-'.$dayEnd->sale_date->format('Y-m-d').'.pdf');

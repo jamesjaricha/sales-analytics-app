@@ -33,7 +33,7 @@ class SaleController extends Controller
             return redirect()->route('day.open');
         }
 
-        $invoices = Sale::with('user')
+        $invoices = Sale::with(['user', 'salePayments'])
             ->completed()
             ->forDate($today)
             ->latest()
@@ -59,6 +59,9 @@ class SaleController extends Controller
             'customer_phone' => ['nullable', 'required_if:payment_method,'.PaymentMethod::Credit->value, 'string', 'max:30'],
             'paid_amount' => ['nullable', 'numeric', 'min:0'],
             'paid_via' => ['nullable', 'in:cash,bank,mobile_money'],
+            'tenders' => ['required_if:payment_method,'.PaymentMethod::Split->value, 'array'],
+            'tenders.*.method' => ['required_with:tenders', 'in:cash,bank,mobile_money'],
+            'tenders.*.amount' => ['required_with:tenders', 'numeric', 'min:0.01'],
             'note' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['nullable', 'integer', 'exists:products,id'],
@@ -69,6 +72,7 @@ class SaleController extends Controller
             'items.required' => 'Add at least one item to the invoice.',
             'customer_name.required_if' => 'A customer name is required for credit (outstanding debt) sales.',
             'customer_phone.required_if' => 'A customer phone number is required for credit (outstanding debt) sales.',
+            'tenders.required_if' => 'Add at least one payment line for the split payment.',
         ]);
 
         $sale = $this->sales->record($validated, Auth::user());

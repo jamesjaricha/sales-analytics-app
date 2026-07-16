@@ -14,15 +14,15 @@ class DebtorController extends Controller
 
     /**
      * Clients with outstanding debts: every unpaid (or partly paid) credit
-     * invoice, grouped by customer, with who recorded it and when.
+     * or split invoice, grouped by customer, with who recorded it and when.
      */
     public function index(Request $request)
     {
         $search = trim((string) $request->query('q', ''));
 
-        $invoices = Sale::with(['user', 'payments.receivedBy'])
+        $invoices = Sale::with(['user', 'payments.receivedBy', 'salePayments'])
             ->completed()
-            ->where('payment_method', PaymentMethod::Credit->value)
+            ->whereIn('payment_method', [PaymentMethod::Credit->value, PaymentMethod::Split->value])
             ->where('amount_due', '>', 0)
             ->when($search !== '', fn ($q) => $q->where('customer_name', 'like', "%{$search}%"))
             ->orderByDesc('business_date')

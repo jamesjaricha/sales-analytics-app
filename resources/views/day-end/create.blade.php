@@ -100,7 +100,7 @@
                                 <div class="px-5 py-3 flex items-center justify-between gap-2">
                                     <div class="min-w-0">
                                         <p class="text-sm font-medium text-gray-900 truncate">{{ $invoice->reference }}</p>
-                                        <p class="text-xs text-gray-500">{{ $invoice->created_at->format('H:i') }} · {{ $invoice->payment_method->label() }}@if($invoice->customer_name) · {{ $invoice->customer_name }}@endif</p>
+                                        <p class="text-xs text-gray-500">{{ $invoice->created_at->format('H:i') }} · {{ $invoice->payment_method->label() }}@if($invoice->settlementSummary()) ({{ $invoice->settlementSummary() }})@endif @if($invoice->customer_name) · {{ $invoice->customer_name }}@endif</p>
                                     </div>
                                     <p class="text-sm font-semibold text-gray-900 shrink-0">ZMW {{ number_format($invoice->total_amount, 2) }}</p>
                                 </div>

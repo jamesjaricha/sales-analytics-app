@@ -13,6 +13,7 @@ class PaymentMethodTest extends TestCase
         $this->assertSame('Cash @ Bank', PaymentMethod::Bank->label());
         $this->assertSame('Mobile Money', PaymentMethod::MobileMoney->label());
         $this->assertSame('Outstanding Debt (Credit)', PaymentMethod::Credit->label());
+        $this->assertSame('Split Payment', PaymentMethod::Split->label());
     }
 
     public function test_only_cash_enters_the_drawer(): void
@@ -21,6 +22,7 @@ class PaymentMethodTest extends TestCase
         $this->assertFalse(PaymentMethod::Bank->entersDrawer());
         $this->assertFalse(PaymentMethod::MobileMoney->entersDrawer());
         $this->assertFalse(PaymentMethod::Credit->entersDrawer());
+        $this->assertFalse(PaymentMethod::Split->entersDrawer());
     }
 
     public function test_credit_is_flagged_as_credit(): void
@@ -29,12 +31,21 @@ class PaymentMethodTest extends TestCase
         $this->assertFalse(PaymentMethod::Cash->isCredit());
     }
 
-    public function test_options_returns_all_four_value_label_pairs(): void
+    public function test_options_returns_all_five_value_label_pairs(): void
     {
         $options = PaymentMethod::options();
 
-        $this->assertCount(4, $options);
+        $this->assertCount(5, $options);
         $this->assertSame(['value' => 'cash', 'label' => 'Cash'], $options[0]);
         $this->assertSame(['value' => 'credit', 'label' => 'Outstanding Debt (Credit)'], $options[3]);
+        $this->assertSame(['value' => 'split', 'label' => 'Split Payment'], $options[4]);
+    }
+
+    public function test_tender_methods_are_real_money_channels_only(): void
+    {
+        $this->assertSame(
+            [PaymentMethod::Cash, PaymentMethod::Bank, PaymentMethod::MobileMoney],
+            PaymentMethod::tenderMethods(),
+        );
     }
 }

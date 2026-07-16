@@ -98,7 +98,7 @@
                 <tr>
                     <td>{{ $invoice->reference }}</td>
                     <td>{{ $invoice->created_at->format('H:i') }}</td>
-                    <td>{{ $invoice->payment_method->label() }}@if($invoice->customer_name) ({{ $invoice->customer_name }})@endif @if((float) $invoice->paid_amount > 0) — paid {{ number_format((float) $invoice->paid_amount, 2) }}, owing {{ number_format((float) $invoice->amount_due, 2) }}@endif</td>
+                    <td>{{ $invoice->payment_method->label() }}@if($invoice->customer_name) ({{ $invoice->customer_name }})@endif @if($invoice->settlementSummary()) — {{ $invoice->settlementSummary() }}@if((float) $invoice->amount_due > 0), owing {{ number_format((float) $invoice->amount_due, 2) }}@endif @elseif((float) $invoice->paid_amount > 0) — paid {{ number_format((float) $invoice->paid_amount, 2) }}, owing {{ number_format((float) $invoice->amount_due, 2) }}@endif</td>
                     <td class="right">ZMW {{ number_format($invoice->total_amount, 2) }}</td>
                 </tr>
             @empty

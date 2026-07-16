@@ -48,24 +48,34 @@ class ReportingService
     /**
      * Settlement breakdown (POS era only — legacy batch sales had no payment method).
      *
+     * Each channel counts money actually received through it: full single-method
+     * invoices, split tender lines, and the paid portion of partly-paid credit
+     * invoices. Outstanding is everything still owed, so the four figures always
+     * add back up to gross sales.
+     *
      * @return array{cash: float, bank: float, mobile_money: float, outstanding: float, total: float}
      */
     public function settlementBreakdown(Carbon $start, Carbon $end): array
     {
-        $sales = Sale::completed()
+        $sales = Sale::with('salePayments')
+            ->completed()
             ->whereBetween('business_date', [$start->copy()->startOfDay(), $end->copy()->endOfDay()])
-            ->get(['payment_method', 'total_amount', 'amount_due']);
+            ->get(['id', 'payment_method', 'total_amount', 'amount_due', 'paid_amount', 'paid_via']);
 
         $byMethod = fn (PaymentMethod $m): float => (float) $sales
             ->filter(fn (Sale $s) => $s->payment_method === $m)
-            ->sum(fn (Sale $s) => (float) $s->total_amount);
+            ->sum(fn (Sale $s) => (float) $s->total_amount)
+            + (float) $sales
+                ->filter(fn (Sale $s) => $s->payment_method === PaymentMethod::Split)
+                ->sum(fn (Sale $s) => (float) $s->salePayments->where('method', $m)->sum('amount'))
+            + (float) $sales
+                ->filter(fn (Sale $s) => $s->payment_method === PaymentMethod::Credit && $s->paid_via === $m->value)
+                ->sum(fn (Sale $s) => (float) $s->paid_amount);
 
         $cash = $byMethod(PaymentMethod::Cash);
         $bank = $byMethod(PaymentMethod::Bank);
         $mobile = $byMethod(PaymentMethod::MobileMoney);
-        $outstanding = (float) $sales
-            ->filter(fn (Sale $s) => $s->payment_method === PaymentMethod::Credit)
-            ->sum(fn (Sale $s) => (float) $s->amount_due);
+        $outstanding = (float) $sales->sum(fn (Sale $s) => (float) $s->amount_due);
 
         return [
             'cash' => $cash,

@@ -26,6 +26,7 @@ class SaleService
      *     customer_name?: string|null,
      *     paid_amount?: int|float|string|null,
      *     paid_via?: string|null,
+     *     tenders?: array<int, array{method?: string|null, amount?: int|float|string|null}>|null,
      *     note?: string|null,
      *     items: array<int, array{product_id?: int|null, product_name: string, quantity: int|string, unit_price: int|float|string}>
      * }  $data
@@ -50,11 +51,31 @@ class SaleService
             $paidAmount = $method->isCredit() ? (float) ($data['paid_amount'] ?? 0) : 0.0;
             $paidVia = $paidAmount > 0 ? ($data['paid_via'] ?? PaymentMethod::Cash->value) : null;
 
-            if ($paidAmount < 0 || $paidAmount >= $total) {
+            if ($paidAmount < 0 || ($method->isCredit() && $paidAmount >= $total)) {
                 throw ValidationException::withMessages([
                     'paid_amount' => 'The amount paid now must be less than the invoice total (use a non-credit method for full payment).',
                 ]);
             }
+
+            // Split payment: the total is settled through several tender lines;
+            // anything not covered stays outstanding (debtor rules apply).
+            $tenders = $method === PaymentMethod::Split
+                ? $this->validateTenders($data['tenders'] ?? [], $total)
+                : [];
+            $tendered = round(array_sum(array_column($tenders, 'amount')), 2);
+            $splitDue = $method === PaymentMethod::Split ? round($total - $tendered, 2) : 0.0;
+
+            if ($splitDue > 0 && (empty($data['customer_name']) || empty($data['customer_phone']))) {
+                throw ValidationException::withMessages([
+                    'customer_name' => 'A customer name and phone number are required when a split payment leaves a balance owing.',
+                ]);
+            }
+
+            $amountDue = match (true) {
+                $method->isCredit() => $total - $paidAmount,
+                $method === PaymentMethod::Split => $splitDue,
+                default => 0,
+            };
 
             $sale = Sale::create([
                 'reference' => $this->generateReference($businessDate),
@@ -62,14 +83,18 @@ class SaleService
                 'business_date' => $businessDate,
                 'payment_method' => $method->value,
                 'total_amount' => $total,
-                'amount_due' => $method->isCredit() ? $total - $paidAmount : 0,
-                'paid_amount' => $paidAmount,
+                'amount_due' => $amountDue,
+                'paid_amount' => $method === PaymentMethod::Split ? $tendered : $paidAmount,
                 'paid_via' => $paidVia,
                 'customer_name' => $data['customer_name'] ?? null,
                 'customer_phone' => $data['customer_phone'] ?? null,
                 'note' => $data['note'] ?? null,
                 'status' => 'completed',
             ]);
+
+            foreach ($tenders as $tender) {
+                $sale->salePayments()->create($tender);
+            }
 
             foreach ($data['items'] as $item) {
                 $qty = (int) $item['quantity'];
@@ -102,9 +127,11 @@ class SaleService
         // A locked day cannot take more money — receive it tomorrow
         $this->assertDayOpen($today);
 
-        if ($sale->payment_method !== PaymentMethod::Credit || $sale->status !== 'completed') {
+        $carriesDebt = in_array($sale->payment_method, [PaymentMethod::Credit, PaymentMethod::Split], true);
+
+        if (! $carriesDebt || $sale->status !== 'completed') {
             throw ValidationException::withMessages([
-                'sale' => 'Repayments can only be recorded against completed credit invoices.',
+                'sale' => 'Repayments can only be recorded against completed credit or split invoices.',
             ]);
         }
 
@@ -199,6 +226,53 @@ class SaleService
             referenceType: SaleItem::class,
             unitCost: $product->cost !== null ? (float) $product->cost : null,
         );
+    }
+
+    /**
+     * Validate and normalise split-payment tender lines.
+     *
+     * @param  array<int, array{method?: string|null, amount?: int|float|string|null}>  $tenders
+     * @return array<int, array{method: string, amount: float}>
+     */
+    private function validateTenders(array $tenders, float $total): array
+    {
+        $validMethods = array_map(fn (PaymentMethod $m) => $m->value, PaymentMethod::tenderMethods());
+        $clean = [];
+
+        foreach ($tenders as $tender) {
+            $method = $tender['method'] ?? null;
+            $amount = round((float) ($tender['amount'] ?? 0), 2);
+
+            if (! in_array($method, $validMethods, true)) {
+                throw ValidationException::withMessages([
+                    'tenders' => 'Each split line must be paid via cash, bank or mobile money.',
+                ]);
+            }
+
+            if ($amount <= 0) {
+                throw ValidationException::withMessages([
+                    'tenders' => 'Each split line needs an amount greater than zero.',
+                ]);
+            }
+
+            $clean[] = ['method' => $method, 'amount' => $amount];
+        }
+
+        if ($clean === []) {
+            throw ValidationException::withMessages([
+                'tenders' => 'Add at least one payment line for a split payment.',
+            ]);
+        }
+
+        $tendered = round(array_sum(array_column($clean, 'amount')), 2);
+
+        if ($tendered > round($total, 2)) {
+            throw ValidationException::withMessages([
+                'tenders' => 'The split lines add up to more than the invoice total of '.number_format($total, 2).'.',
+            ]);
+        }
+
+        return $clean;
     }
 
     /**

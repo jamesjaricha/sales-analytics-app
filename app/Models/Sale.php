@@ -55,6 +55,29 @@ class Sale extends Model
         return $this->hasMany(DebtPayment::class);
     }
 
+    /**
+     * Tender lines of a split-payment invoice (empty for single-method sales).
+     */
+    public function salePayments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class);
+    }
+
+    /**
+     * Human-readable tender breakdown for split invoices,
+     * e.g. "Cash 300.00 + Mobile 200.00". Null for single-method sales.
+     */
+    public function settlementSummary(): ?string
+    {
+        if ($this->payment_method !== PaymentMethod::Split) {
+            return null;
+        }
+
+        return $this->salePayments
+            ->map(fn (SalePayment $p) => $p->method->shortLabel().' '.number_format((float) $p->amount, 2))
+            ->implode(' + ');
+    }
+
     public function dayEndReport(): BelongsTo
     {
         return $this->belongsTo(DailySalesReport::class, 'day_end_report_id');

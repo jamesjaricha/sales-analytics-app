@@ -94,14 +94,18 @@ class SaleModelTest extends TestCase
         $this->assertFalse($this->makeSale()->isLocked());
     }
 
-    public function test_payment_method_options_lists_all_four_settlements(): void
+    public function test_payment_method_options_lists_all_five_settlements(): void
     {
         $options = PaymentMethod::options();
 
-        $this->assertCount(4, $options);
+        $this->assertCount(5, $options);
         $this->assertSame(
             ['value' => 'credit', 'label' => 'Outstanding Debt (Credit)'],
             $options[3],
+        );
+        $this->assertSame(
+            ['value' => 'split', 'label' => 'Split Payment'],
+            $options[4],
         );
     }
 

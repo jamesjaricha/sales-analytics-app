@@ -125,10 +125,22 @@
                         </div>
                     </div>
 
-                    <!-- Payment -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200/80 p-5 mt-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment method</h2>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <!-- Payment modal: opens once the invoice is built -->
+                    <div x-show="payModal" x-cloak x-on:keydown.escape.window="payModal = false"
+                        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+                        <div class="absolute inset-0 bg-gray-900/50" x-on:click="payModal = false"></div>
+                        <div class="relative bg-white w-full sm:max-w-2xl rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto p-5"
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="opacity-0 translate-y-4"
+                            x-transition:enter-end="opacity-100 translate-y-0">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">How is the customer paying?</h2>
+                                <p class="text-sm text-gray-500 mt-0.5">Invoice total · <span class="font-bold text-emerald-700 tabular-nums" x-text="'ZMW ' + total.toFixed(2)"></span></p>
+                            </div>
+                            <button type="button" x-on:click="payModal = false" class="text-gray-400 hover:text-gray-600 p-1" aria-label="Close">✕</button>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             <template x-for="m in methods" :key="m.value">
                                 <label class="cursor-pointer">
                                     <input type="radio" name="payment_method" x-bind:value="m.value" x-model="payment_method" class="peer sr-only">
@@ -139,7 +151,8 @@
                             </template>
                         </div>
 
-                        <div x-show="payment_method === 'credit'" x-cloak class="mt-4 space-y-3">
+                        <template x-if="payment_method === 'credit'">
+                        <div class="mt-4 space-y-3">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Customer name <span class="text-red-500">*</span></label>
@@ -185,12 +198,75 @@
                                 </p>
                             </div>
                         </div>
+                        </template>
+
+                        <!-- Split payment: several tender lines settle one invoice -->
+                        <template x-if="payment_method === 'split'">
+                        <div class="mt-4 space-y-3">
+                            <div class="rounded-xl bg-emerald-50/60 border border-emerald-200 p-3 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-gray-700">How is the customer paying?</p>
+                                    <button type="button" x-on:click="addTender()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">+ Add line</button>
+                                </div>
+                                <template x-for="(t, i) in tenders" :key="i">
+                                    <div class="flex gap-2">
+                                        <select x-bind:name="'tenders['+i+'][method]'" x-model="t.method"
+                                            class="w-40 px-2 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                            <option value="cash">Cash</option>
+                                            <option value="bank">Cash @ Bank</option>
+                                            <option value="mobile_money">Mobile Money</option>
+                                        </select>
+                                        <input type="number" min="0.01" step="0.01" x-bind:name="'tenders['+i+'][amount]'" x-model.number="t.amount" placeholder="0.00"
+                                            class="flex-1 px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                        <button type="button" x-on:click="removeTender(i)" class="text-red-500 hover:text-red-700 px-2" aria-label="Remove line">✕</button>
+                                    </div>
+                                </template>
+                                <div class="flex items-center justify-between pt-2 border-t border-emerald-200 text-sm">
+                                    <span class="text-gray-500">Paid now: <span class="font-semibold text-gray-900 tabular-nums" x-text="'ZMW ' + tendered.toFixed(2)"></span></span>
+                                    <span x-show="!splitSettled" class="text-amber-700">Outstanding: <span class="font-bold tabular-nums" x-text="'ZMW ' + splitRemainder.toFixed(2)"></span></span>
+                                    <span x-show="splitSettled && !splitOver" x-cloak class="text-emerald-700 font-medium">Fully paid ✓</span>
+                                </div>
+                                <p x-show="splitOver" x-cloak class="text-xs text-red-600">
+                                    The lines add up to more than the invoice total — reduce one of the amounts.
+                                </p>
+                            </div>
+
+                            <div x-show="!splitSettled" x-cloak class="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                                <p class="text-xs text-amber-700 mb-2">The unpaid balance becomes an outstanding debt — customer details are required.</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Customer name <span class="text-red-500">*</span></label>
+                                        <input type="text" name="customer_name" x-model="customer_name" x-bind:required="!splitSettled"
+                                            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone number <span class="text-red-500">*</span></label>
+                                        <input type="tel" name="customer_phone" x-model="customer_phone" x-bind:required="!splitSettled"
+                                            inputmode="tel" placeholder="e.g. 0977 123 456"
+                                            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                                        <input type="text" name="note" x-model="note" placeholder="e.g. due date"
+                                            class="w-full px-3 py-2 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </template>
+
+                        <button type="submit" x-bind:disabled="!canSubmit || submitting"
+                            class="mt-5 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.99]">
+                            <svg x-show="submitting" x-cloak class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                            <span x-text="submitting ? 'Recording…' : 'Record Invoice'"></span>
+                        </button>
+                        </div>
                     </div>
 
-                    <button type="submit" x-bind:disabled="!canSubmit || submitting"
+                    <button type="button" x-on:click="openPay()" x-bind:disabled="!itemsOk"
                         class="mt-6 w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl shadow-sm shadow-emerald-600/20 inline-flex items-center justify-center gap-2 [transition:background-color_160ms_var(--ease-out),transform_160ms_var(--ease-out)] active:scale-[0.99]">
-                        <svg x-show="submitting" x-cloak class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                        <span x-text="submitting ? 'Recording…' : 'Record Invoice'"></span>
+                        Continue to Payment
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </button>
                 </form>
             </div>
@@ -222,7 +298,7 @@
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ $invoice->reference }}</p>
                                     <p class="text-xs text-gray-500">
-                                        {{ $invoice->created_at->format('H:i') }} · {{ $invoice->payment_method->label() }}@if($invoice->customer_name) · {{ $invoice->customer_name }}@endif
+                                        {{ $invoice->created_at->format('H:i') }} · {{ $invoice->payment_method->label() }}@if($invoice->settlementSummary()) ({{ $invoice->settlementSummary() }})@endif @if($invoice->customer_name) · {{ $invoice->customer_name }}@endif
                                     </p>
                                 </div>
                                 <div class="text-right shrink-0">
@@ -254,13 +330,22 @@ document.addEventListener('alpine:init', () => {
         highlighted: -1,
         items: [],
         submitting: false,
+        payModal: false,
         payment_method: 'cash',
         customer_name: '',
         customer_phone: '',
         paid_amount: '',
         paid_via: 'cash',
+        tenders: [],
         note: '',
         methods: @json($paymentMethods),
+
+        init() {
+            // Selecting Split should always present at least one tender line
+            this.$watch('payment_method', (m) => {
+                if (m === 'split' && !this.tenders.length) this.addTender();
+            });
+        },
 
         async lookup() {
             const q = this.search.trim();
@@ -329,10 +414,51 @@ document.addEventListener('alpine:init', () => {
             return this.payment_method === 'credit' && (Number(this.paid_amount) || 0) >= this.total && this.total > 0;
         },
 
-        get canSubmit() {
+        get itemsOk() {
             return this.items.length > 0
-                && this.items.every(it => it.product_name && Number(it.quantity) > 0)
-                && !this.paidTooMuch;
+                && this.items.every(it => it.product_name && Number(it.quantity) > 0);
+        },
+
+        openPay() {
+            if (this.itemsOk) this.payModal = true;
+        },
+
+        addTender() {
+            this.tenders.push({ method: this.tenders.length ? 'mobile_money' : 'cash', amount: '' });
+        },
+
+        removeTender(i) {
+            this.tenders.splice(i, 1);
+        },
+
+        get tendered() {
+            return this.tenders.reduce((s, t) => s + (Number(t.amount) || 0), 0);
+        },
+
+        get splitRemainder() {
+            return Math.max(this.total - this.tendered, 0);
+        },
+
+        get splitOver() {
+            return this.payment_method === 'split' && this.tendered > this.total + 0.004;
+        },
+
+        get splitSettled() {
+            return this.total - this.tendered <= 0.004;
+        },
+
+        get splitOk() {
+            return this.tenders.length > 0
+                && this.tenders.every(t => (Number(t.amount) || 0) > 0)
+                && !this.splitOver
+                && (this.splitSettled || (this.customer_name.trim() !== '' && this.customer_phone.trim() !== ''));
+        },
+
+        get canSubmit() {
+            if (!this.itemsOk) return false;
+            if (this.payment_method === 'credit') return !this.paidTooMuch;
+            if (this.payment_method === 'split') return this.splitOk;
+            return true;
         },
     }));
 });

@@ -25,7 +25,7 @@ class DayEndService
      */
     public function summary(string $businessDate): array
     {
-        $sales = Sale::with('items')
+        $sales = Sale::with(['items', 'salePayments'])
             ->completed()
             ->unreconciled()
             ->forDate($businessDate)
@@ -40,11 +40,15 @@ class DayEndService
             ->latest()
             ->get();
 
-        // Money collected today in a method: full invoices + partial payments
-        // on today's credit invoices + debt repayments received today.
+        // Money collected today in a method: full invoices + split tender lines
+        // + partial payments on today's credit invoices + debt repayments
+        // received today.
         $byMethod = fn (PaymentMethod $m): float => (float) $sales
             ->filter(fn (Sale $s) => $s->payment_method === $m)
             ->sum(fn (Sale $s) => (float) $s->total_amount)
+            + (float) $sales
+                ->filter(fn (Sale $s) => $s->payment_method === PaymentMethod::Split)
+                ->sum(fn (Sale $s) => (float) $s->salePayments->where('method', $m)->sum('amount'))
             + (float) $sales
                 ->filter(fn (Sale $s) => $s->payment_method === PaymentMethod::Credit && $s->paid_via === $m->value)
                 ->sum(fn (Sale $s) => (float) $s->paid_amount)
@@ -60,9 +64,9 @@ class DayEndService
             'total_cash' => $byMethod(PaymentMethod::Cash),
             'total_bank' => $byMethod(PaymentMethod::Bank),
             'total_mobile_money' => $byMethod(PaymentMethod::MobileMoney),
-            'total_outstanding' => (float) $sales
-                ->filter(fn (Sale $s) => $s->payment_method === PaymentMethod::Credit)
-                ->sum(fn (Sale $s) => (float) $s->amount_due),
+            // Anything still owed: credit remainders + split remainders.
+            // amount_due is 0 for fully settled sales, so summing is safe.
+            'total_outstanding' => (float) $sales->sum(fn (Sale $s) => (float) $s->amount_due),
             'sales' => $sales,
             'debt_payments' => $debtPayments,
             'debt_payments_total' => (float) $debtPayments->sum(fn (DebtPayment $p) => (float) $p->amount),
