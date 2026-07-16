@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\StockService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class StockController extends Controller
 {
@@ -70,6 +70,7 @@ class StockController extends Controller
                 'message' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->back()->with('error', 'Unable to load stock data. Please try again.');
         }
     }
@@ -122,6 +123,7 @@ class StockController extends Controller
                 'user_id' => Auth::id(),
                 'product_id' => $request->product_id ?? null,
             ]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to adjust stock. Please try again.');
@@ -144,6 +146,7 @@ class StockController extends Controller
                 'message' => $e->getMessage(),
                 'product_id' => $product->id,
             ]);
+
             return redirect()->back()->with('error', 'Unable to load stock history. Please try again.');
         }
     }
@@ -188,6 +191,7 @@ class StockController extends Controller
                 'message' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->back()->with('error', 'Unable to load stock reports. Please try again.');
         }
     }
@@ -213,8 +217,8 @@ class StockController extends Controller
 
         // Calculate totals
         $totalStockValue = $this->stockService->getTotalStockValue();
-        $lowStockCount = $products->filter(fn($p) => $p->isLowStock())->count();
-        $outOfStockCount = $products->filter(fn($p) => $p->isOutOfStock())->count();
+        $lowStockCount = $products->filter(fn ($p) => $p->isLowStock())->count();
+        $outOfStockCount = $products->filter(fn ($p) => $p->isOutOfStock())->count();
 
         // Movement summary for the day
         $movementSummary = [
@@ -237,6 +241,6 @@ class StockController extends Controller
             'movementSummary'
         ));
 
-        return $pdf->download('daily-stock-report-' . $date . '.pdf');
+        return $pdf->download('daily-stock-report-'.$date.'.pdf');
     }
 }

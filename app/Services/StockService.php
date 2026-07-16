@@ -11,14 +11,13 @@ class StockService
     /**
      * Adjust stock for a product
      *
-     * @param Product $product
-     * @param int $quantity Positive for increase, negative for decrease
-     * @param string $type Movement type (in, out, adjustment, sale, purchase, return, initial)
-     * @param int $userId User performing the action
-     * @param string|null $notes Optional notes
-     * @param int|null $referenceId Optional reference ID (e.g., sales item ID)
-     * @param string|null $referenceType Optional reference type (e.g., DailySalesItem)
-     * @param float|null $unitCost Optional unit cost
+     * @param  int  $quantity  Positive for increase, negative for decrease
+     * @param  string  $type  Movement type (in, out, adjustment, sale, purchase, return, initial)
+     * @param  int  $userId  User performing the action
+     * @param  string|null  $notes  Optional notes
+     * @param  int|null  $referenceId  Optional reference ID (e.g., sales item ID)
+     * @param  string|null  $referenceType  Optional reference type (e.g., DailySalesItem)
+     * @param  float|null  $unitCost  Optional unit cost
      * @return StockMovement
      */
     public function adjustStock(
@@ -72,10 +71,6 @@ class StockService
     /**
      * Process stock for a sale
      *
-     * @param Product $product
-     * @param int $quantity
-     * @param int $userId
-     * @param int $salesItemId
      * @return StockMovement|null Returns null if stock tracking is disabled
      */
     public function processSale(
@@ -85,7 +80,7 @@ class StockService
         int $salesItemId
     ) {
         // Only process if stock tracking is enabled
-        if (!$product->track_stock) {
+        if (! $product->track_stock) {
             return null;
         }
 
@@ -94,7 +89,7 @@ class StockService
             quantity: -$quantity, // Negative for stock decrease
             type: 'sale',
             userId: $userId,
-            notes: "Stock deducted for sale",
+            notes: 'Stock deducted for sale',
             referenceId: $salesItemId,
             referenceType: 'App\Models\DailySalesItem',
             unitCost: $product->cost
@@ -143,8 +138,6 @@ class StockService
     /**
      * Get stock movement summary for a date range
      *
-     * @param string $startDate
-     * @param string $endDate
      * @return array
      */
     public function getMovementSummary(string $startDate, string $endDate)

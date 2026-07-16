@@ -58,6 +58,6 @@ class LocalDevSeeder extends Seeder
             );
         }
 
-        $this->command->info('Seeded ' . count($products) . ' sample products.');
+        $this->command->info('Seeded '.count($products).' sample products.');
     }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -22,9 +22,9 @@ class ProductController extends Controller
             if ($search = $request->get('search')) {
                 $searchTerm = trim($search);
                 $query->where(function ($q) use ($searchTerm) {
-                    $q->where('name', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('sku', 'like', '%' . $searchTerm . '%')
-                        ->orWhere('category', 'like', '%' . $searchTerm . '%');
+                    $q->where('name', 'like', '%'.$searchTerm.'%')
+                        ->orWhere('sku', 'like', '%'.$searchTerm.'%')
+                        ->orWhere('category', 'like', '%'.$searchTerm.'%');
                 });
             }
 
@@ -46,9 +46,12 @@ class ProductController extends Controller
                 'message' => $e->getMessage(),
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->back()->with('error', 'Unable to load products. Please try again.');
         }
-    }    // Show create form
+    }
+
+    // Show create form
     public function create()
     {
         return view('products.create');
@@ -68,6 +71,7 @@ class ProductController extends Controller
                 'user_id' => Auth::id(),
                 'data' => $request->validated(),
             ]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to create product. Please try again.');
@@ -110,6 +114,7 @@ class ProductController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('products.index')->with('success', 'Product updated successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -118,6 +123,7 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to update product. Please try again.');
@@ -128,7 +134,7 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         try {
-            $newStatus = !$product->is_active;
+            $newStatus = ! $product->is_active;
             $product->update(['is_active' => $newStatus]);
 
             $message = $newStatus
@@ -142,6 +148,7 @@ class ProductController extends Controller
                 'product_id' => $product->id,
                 'user_id' => Auth::id(),
             ]);
+
             return redirect()->back()->with('error', 'Failed to update product status. Please try again.');
         }
     }
