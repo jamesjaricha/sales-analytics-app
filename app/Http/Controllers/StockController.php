@@ -141,18 +141,22 @@ class StockController extends Controller
             [$startDate, $endDate, $period] = $this->resolvePeriod($request, 'all');
             $type = $request->input('type') ?: null;
 
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->endOfDay();
+
             $movements = $product->stockMovements()
-                ->when($period !== 'all', fn ($q) => $q->whereBetween('created_at', [
-                    Carbon::parse($startDate)->startOfDay(),
-                    Carbon::parse($endDate)->endOfDay(),
-                ]))
+                ->whereBetween('created_at', [$start, $end])
                 ->when($type, fn ($q) => $q->where('type', $type))
                 ->with('user')
                 ->latest()
                 ->paginate(50)
                 ->appends($request->query());
 
-            return view('stock.history', compact('product', 'movements', 'startDate', 'endDate', 'period', 'type'));
+            // Reconciliation totals for the window — ignores the type filter so
+            // it always shows the full picture (sold vs received vs adjusted).
+            $periodSummary = $this->stockService->getProductPeriodSummary($product, $start, $end);
+
+            return view('stock.history', compact('product', 'movements', 'startDate', 'endDate', 'period', 'type', 'periodSummary'));
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -241,7 +245,15 @@ class StockController extends Controller
             'product_id' => ['nullable', 'integer'],
         ]);
 
-        $period = $request->input('period', $default);
+        // A preset button sends its own `period`. Typing dates and pressing
+        // Enter sends none — so when dates are present without a preset, treat
+        // it as a custom range instead of silently falling back to the default
+        // (which was showing rows outside the typed window).
+        $period = $request->input('period');
+        if (! $period) {
+            $period = ($request->filled('start_date') || $request->filled('end_date')) ? 'custom' : $default;
+        }
+
         $today = Carbon::now();
 
         return match ($period) {

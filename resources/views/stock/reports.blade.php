@@ -57,11 +57,11 @@
 
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">From</label>
-                    <input type="date" name="start_date" value="{{ $startDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    <input type="date" name="start_date" value="{{ $period === 'all' ? '' : $startDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">To</label>
-                    <input type="date" name="end_date" value="{{ $endDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    <input type="date" name="end_date" value="{{ $period === 'all' ? '' : $endDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                 </div>
 
                 <button type="submit" name="period" value="custom"

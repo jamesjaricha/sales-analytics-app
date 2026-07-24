@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\StockMovement;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class StockService
@@ -138,6 +139,36 @@ class StockService
             ->where('is_active', true)
             ->selectRaw('SUM(stock_quantity * COALESCE(NULLIF(cost, 0), price, 0)) as total_value')
             ->value('total_value') ?? 0;
+    }
+
+    /**
+     * Reconciliation totals for one product over a window: units sold,
+     * received (stock in + purchases), returned, net adjustment, and the net
+     * change overall. Sale rows are stored negative, so `sold` is flipped
+     * back to a positive count.
+     *
+     * @return array{sold: int, received: int, returned: int, adjusted: int, net: int}
+     */
+    public function getProductPeriodSummary(Product $product, Carbon $start, Carbon $end): array
+    {
+        $row = $product->stockMovements()
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN type = 'sale' THEN -quantity ELSE 0 END), 0) as sold,
+                COALESCE(SUM(CASE WHEN type IN ('in', 'purchase') THEN quantity ELSE 0 END), 0) as received,
+                COALESCE(SUM(CASE WHEN type = 'return' THEN quantity ELSE 0 END), 0) as returned,
+                COALESCE(SUM(CASE WHEN type = 'adjustment' THEN quantity ELSE 0 END), 0) as adjusted,
+                COALESCE(SUM(quantity), 0) as net
+            ")
+            ->first();
+
+        return [
+            'sold' => (int) $row->sold,
+            'received' => (int) $row->received,
+            'returned' => (int) $row->returned,
+            'adjusted' => (int) $row->adjusted,
+            'net' => (int) $row->net,
+        ];
     }
 
     /**

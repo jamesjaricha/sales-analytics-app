@@ -62,11 +62,11 @@
 
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">From</label>
-                    <input type="date" name="start_date" value="{{ $startDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    <input type="date" name="start_date" value="{{ $period === 'all' ? '' : $startDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">To</label>
-                    <input type="date" name="end_date" value="{{ $endDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    <input type="date" name="end_date" value="{{ $period === 'all' ? '' : $endDate }}" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                 </div>
 
                 <button type="submit" name="period" value="custom"
@@ -79,6 +79,37 @@
                 </a>
             </div>
         </form>
+
+        <!-- Period reconciliation -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200/80 p-5 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-gray-700">This period</h3>
+                <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($startDate)->format('d M Y') }} – {{ \Carbon\Carbon::parse($endDate)->format('d M Y') }}</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div class="rounded-xl bg-red-50 border border-red-100 p-3">
+                    <p class="text-xs text-gray-500">Sold</p>
+                    <p class="text-xl font-bold text-red-600 tabular-nums">{{ number_format($periodSummary['sold']) }}</p>
+                </div>
+                <div class="rounded-xl bg-green-50 border border-green-100 p-3">
+                    <p class="text-xs text-gray-500">Received</p>
+                    <p class="text-xl font-bold text-green-600 tabular-nums">+{{ number_format($periodSummary['received']) }}</p>
+                </div>
+                <div class="rounded-xl bg-gray-50 border border-gray-100 p-3">
+                    <p class="text-xs text-gray-500">Returns</p>
+                    <p class="text-xl font-bold text-gray-700 tabular-nums">+{{ number_format($periodSummary['returned']) }}</p>
+                </div>
+                <div class="rounded-xl bg-yellow-50 border border-yellow-100 p-3">
+                    <p class="text-xs text-gray-500">Adjustments</p>
+                    <p class="text-xl font-bold text-yellow-700 tabular-nums">{{ $periodSummary['adjusted'] > 0 ? '+' : '' }}{{ number_format($periodSummary['adjusted']) }}</p>
+                </div>
+                <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
+                    <p class="text-xs text-gray-500">Net change</p>
+                    <p class="text-xl font-bold text-emerald-700 tabular-nums">{{ $periodSummary['net'] > 0 ? '+' : '' }}{{ number_format($periodSummary['net']) }}</p>
+                </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-3">Current stock on record: <span class="font-semibold text-gray-600 tabular-nums">{{ number_format($product->stock_quantity) }} {{ $product->unit_of_measurement }}</span> — count the shelf against this to reconcile.</p>
+        </div>
 
         <!-- Movements -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-200/80 overflow-hidden">

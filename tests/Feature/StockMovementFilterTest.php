@@ -74,6 +74,59 @@ class StockMovementFilterTest extends TestCase
         $this->assertCount(1, $response->viewData('recentMovements'));
     }
 
+    public function test_history_honours_typed_dates_without_a_preset(): void
+    {
+        // The real-world bug: typing From/To and pressing Enter sends no
+        // `period`, and History used to fall back to "all time" and show
+        // everything. Dates present must now filter as a custom range.
+        $this->movement('sale', -4, now()->toDateTimeString());
+        $this->movement('sale', -9, now()->subMonths(2)->toDateTimeString());
+
+        $response = $this->actingAs($this->user)->get(route('stock.history', [
+            'product' => $this->product,
+            'start_date' => now()->subDays(3)->toDateString(),
+            'end_date' => now()->toDateString(),
+        ]));
+
+        $response->assertOk();
+        $movements = $response->viewData('movements');
+        $this->assertCount(1, $movements);
+        $this->assertSame('custom', $response->viewData('period'));
+    }
+
+    public function test_history_period_summary_reconciles_sold_and_received(): void
+    {
+        $this->movement('sale', -4);
+        $this->movement('sale', -6);
+        $this->movement('purchase', 300);
+        $this->movement('return', 2);
+        $this->movement('adjustment', -1);
+
+        $summary = $this->actingAs($this->user)
+            ->get(route('stock.history', ['product' => $this->product, 'period' => 'all']))
+            ->viewData('periodSummary');
+
+        $this->assertSame(10, $summary['sold']);      // 4 + 6, flipped positive
+        $this->assertSame(300, $summary['received']);
+        $this->assertSame(2, $summary['returned']);
+        $this->assertSame(-1, $summary['adjusted']);
+        $this->assertSame(291, $summary['net']);      // -4-6+300+2-1
+    }
+
+    public function test_period_summary_ignores_the_type_filter(): void
+    {
+        $this->movement('sale', -4);
+        $this->movement('purchase', 100);
+
+        // Even when viewing only sales, the summary shows the full picture
+        $summary = $this->actingAs($this->user)
+            ->get(route('stock.history', ['product' => $this->product, 'period' => 'all', 'type' => 'sale']))
+            ->viewData('periodSummary');
+
+        $this->assertSame(4, $summary['sold']);
+        $this->assertSame(100, $summary['received']);
+    }
+
     public function test_history_filters_by_type(): void
     {
         $this->movement('sale', -3);
