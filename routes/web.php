@@ -78,6 +78,7 @@ Route::middleware(['auth', 'role:admin,sales_rep', 'throttle:300,1'])->group(fun
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
     Route::get('/stock/low-stock', [StockController::class, 'lowStock'])->name('stock.low-stock');
     Route::get('/stock/reports', [StockController::class, 'reports'])->name('stock.reports');
+    Route::get('/stock/movements/export', [StockController::class, 'exportMovements'])->name('stock.movements.export')->middleware('throttle:20,1');
     Route::get('/stock/daily-pdf', [StockController::class, 'dailyStockPDF'])->name('stock.daily-pdf')->middleware('throttle:20,1');
     Route::get('/stock/{product}/history', [StockController::class, 'history'])->name('stock.history');
 });

@@ -55,6 +55,24 @@ class StockMovement extends Model
     }
 
     /**
+     * Selectable movement types for filter dropdowns, keyed by stored value.
+     *
+     * @return array<string, string>
+     */
+    public static function typeOptions(): array
+    {
+        return [
+            'sale' => 'Sale',
+            'purchase' => 'Purchase',
+            'return' => 'Return',
+            'adjustment' => 'Adjustment',
+            'in' => 'Stock In',
+            'out' => 'Stock Out',
+            'initial' => 'Initial Stock',
+        ];
+    }
+
+    /**
      * Scope for filtering by type
      */
     public function scopeOfType($query, $type)

@@ -6,10 +6,12 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Services\StockService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StockController extends Controller
 {
@@ -133,14 +135,26 @@ class StockController extends Controller
     /**
      * Display stock movement history for a product
      */
-    public function history(Product $product)
+    public function history(Product $product, Request $request)
     {
         try {
-            $movements = $product->stockMovements()
-                ->with('user')
-                ->paginate(50);
+            [$startDate, $endDate, $period] = $this->resolvePeriod($request, 'all');
+            $type = $request->input('type') ?: null;
 
-            return view('stock.history', compact('product', 'movements'));
+            $movements = $product->stockMovements()
+                ->when($period !== 'all', fn ($q) => $q->whereBetween('created_at', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay(),
+                ]))
+                ->when($type, fn ($q) => $q->where('type', $type))
+                ->with('user')
+                ->latest()
+                ->paginate(50)
+                ->appends($request->query());
+
+            return view('stock.history', compact('product', 'movements', 'startDate', 'endDate', 'period', 'type'));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Stock History Error', [
                 'message' => $e->getMessage(),
@@ -167,25 +181,38 @@ class StockController extends Controller
     public function reports(Request $request)
     {
         try {
-            $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
-            $endDate = $request->input('end_date', now()->format('Y-m-d'));
+            [$startDate, $endDate, $period] = $this->resolvePeriod($request);
+            $type = $request->input('type') ?: null;
+            $productId = $request->input('product_id') ?: null;
 
             $summary = $this->stockService->getMovementSummary($startDate, $endDate);
             $totalStockValue = $this->stockService->getTotalStockValue();
 
             $recentMovements = StockMovement::dateRange($startDate, $endDate)
+                ->when($type, fn ($q) => $q->where('type', $type))
+                ->when($productId, fn ($q) => $q->where('product_id', $productId))
                 ->with(['product', 'user'])
                 ->latest()
                 ->paginate(50)
                 ->appends($request->query());
+
+            $products = Product::where('track_stock', true)
+                ->orderBy('name')
+                ->get(['id', 'name']);
 
             return view('stock.reports', compact(
                 'summary',
                 'totalStockValue',
                 'recentMovements',
                 'startDate',
-                'endDate'
+                'endDate',
+                'period',
+                'type',
+                'productId',
+                'products'
             ));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Stock Reports Error', [
                 'message' => $e->getMessage(),
@@ -194,6 +221,82 @@ class StockController extends Controller
 
             return redirect()->back()->with('error', 'Unable to load stock reports. Please try again.');
         }
+    }
+
+    /**
+     * Resolve a reporting window from a period preset (today/week/month/all)
+     * or explicit custom dates. Returns [startDate, endDate, period].
+     *
+     * @return array{0: string, 1: string, 2: string}
+     */
+    private function resolvePeriod(Request $request, string $default = 'month'): array
+    {
+        // Reject malformed filters up front so bad input can never reach
+        // Carbon::parse (a 500) or the download filename.
+        $request->validate([
+            'period' => ['nullable', 'in:today,week,month,all,custom'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+            'type' => ['nullable', 'in:'.implode(',', array_keys(StockMovement::typeOptions()))],
+            'product_id' => ['nullable', 'integer'],
+        ]);
+
+        $period = $request->input('period', $default);
+        $today = Carbon::now();
+
+        return match ($period) {
+            'today' => [$today->toDateString(), $today->toDateString(), 'today'],
+            'week' => [$today->copy()->startOfWeek()->toDateString(), $today->copy()->endOfWeek()->toDateString(), 'week'],
+            'all' => ['2000-01-01', $today->toDateString(), 'all'],
+            'custom' => [
+                $request->input('start_date', $today->copy()->startOfMonth()->toDateString()),
+                $request->input('end_date', $today->toDateString()),
+                'custom',
+            ],
+            default => [$today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString(), 'month'],
+        };
+    }
+
+    /**
+     * Stream the filtered stock movements as a CSV (memory-safe via chunking).
+     */
+    public function exportMovements(Request $request): StreamedResponse
+    {
+        [$startDate, $endDate] = $this->resolvePeriod($request);
+        $type = $request->input('type') ?: null;
+        $productId = $request->input('product_id') ?: null;
+
+        $filename = 'stock-movements-'.$startDate.'-to-'.$endDate.'.csv';
+
+        return response()->streamDownload(function () use ($startDate, $endDate, $type, $productId) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Date', 'Product', 'SKU', 'Type', 'Quantity', 'Before', 'After', 'User', 'Notes']);
+
+            StockMovement::dateRange($startDate, $endDate)
+                ->when($type, fn ($q) => $q->where('type', $type))
+                ->when($productId, fn ($q) => $q->where('product_id', $productId))
+                ->with(['product', 'user'])
+                // Unique ordering: created_at ties across a chunk boundary
+                // would skip/duplicate rows with offset pagination.
+                ->orderByDesc('id')
+                ->chunk(500, function ($movements) use ($out) {
+                    foreach ($movements as $m) {
+                        fputcsv($out, [
+                            $m->created_at->format('Y-m-d H:i'),
+                            $m->product->name ?? '-',
+                            $m->product->sku ?? '-',
+                            $m->type_label,
+                            $m->quantity,
+                            $m->stock_before,
+                            $m->stock_after,
+                            $m->user->name ?? 'System',
+                            $m->notes ?? '',
+                        ]);
+                    }
+                });
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
     }
 
     /**
