@@ -151,8 +151,12 @@ class StockService
      */
     public function getProductPeriodSummary(Product $product, Carbon $start, Carbon $end): array
     {
+        // reorder() strips the relation's default `ORDER BY created_at desc`;
+        // MySQL rejects an aggregate SELECT with no GROUP BY when a non-
+        // aggregated ORDER BY column is present (error 1140).
         $row = $product->stockMovements()
             ->whereBetween('created_at', [$start, $end])
+            ->reorder()
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN type = 'sale' THEN -quantity ELSE 0 END), 0) as sold,
                 COALESCE(SUM(CASE WHEN type IN ('in', 'purchase') THEN quantity ELSE 0 END), 0) as received,
